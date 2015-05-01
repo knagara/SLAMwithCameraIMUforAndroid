@@ -1,6 +1,6 @@
 # SLAMwithCameraIMUforAndroid
 ---
-#### ‰æ‘œƒZƒ“ƒT‚ÆIMU‚ğ—p‚¢‚½SLAM
+#### ç”»åƒã‚»ãƒ³ã‚µã¨IMUã‚’ç”¨ã„ãŸSLAM
 <br>
 >SLAM = Simultaneous Localization and Mapping
 <br>
