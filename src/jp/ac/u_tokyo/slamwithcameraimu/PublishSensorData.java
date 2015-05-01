@@ -5,9 +5,14 @@ import android.util.Log;
 public class PublishSensorData extends Thread {
 
 	private boolean halt_ = false;
+	MqttClientService MCS;
 
 	public PublishSensorData(){
 		halt_ = false;
+	}
+
+	public void setMCS(MqttClientService MCS){
+		this.MCS = MCS;
 	}
 
 	public void run(){
@@ -18,14 +23,16 @@ public class PublishSensorData extends Thread {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			Log.d("SLAM","a");
+			MCS.publish("SLAM/input/sensor", "1");
 		}
 
 	}
 
 	public void halt(){
-    	Log.d("SLAM", "halt PublishSensorData");
-		halt_ = true;
-		interrupt();
+		if(!halt_){
+	    	Log.d("SLAM", "halt PublishSensorData");
+			halt_ = true;
+			interrupt();
+		}
 	}
 }

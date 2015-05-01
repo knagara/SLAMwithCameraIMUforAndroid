@@ -1,14 +1,15 @@
 package jp.ac.u_tokyo.slamwithcameraimu;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
-import org.eclipse.paho.client.mqttv3.MqttTopic;
 
 import android.content.Context;
 import android.util.Log;
@@ -23,6 +24,8 @@ public class MqttClientService implements MqttCallback {
 	String clientId;
 	String uri;
     boolean cleanSession = true;
+    int qos = 0;
+    boolean retain = false;
 
 	public MqttAndroidClient client;
 	private MqttConnectOptions conOpt;
@@ -37,17 +40,11 @@ public class MqttClientService implements MqttCallback {
 
 		try{
 		    uri = "tcp://" + host + ":" + port;
-
-			conOpt = new MqttConnectOptions();
-			conOpt.setCleanSession(cleanSession);
-			conOpt.setUserName(user);
-			conOpt.setPassword(pass.toCharArray());
-
 			// Construct the MqttClient instance
 		    client = new MqttAndroidClient(context, uri, clientId);
 			// Set this wrapper as the callback handler
 			client.setCallback(this);
-
+		    client.setTraceCallback(new MqttTraceCallback());
 	    } catch (NullPointerException e) {
 	        e.getCause();
 	    } catch (Exception e) {
@@ -55,38 +52,75 @@ public class MqttClientService implements MqttCallback {
 	    }
 	}
 
+	public void setConf(int qos, boolean retain){
+		this.qos = qos;
+		this.retain = retain;
+	}
 
+	public void connect(){
+		try {
+			//set connect options
+			conOpt = new MqttConnectOptions();
+			conOpt.setCleanSession(cleanSession);
+			conOpt.setUserName(user);
+			conOpt.setPassword(pass.toCharArray());
+			//connect
+//			client.connect(conOpt);
+            client.connect(conOpt, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken arg0) {
+                    Log.i("SLAM", "Connection Successful.");
+                }
+                @Override
+                public void onFailure(IMqttToken arg0, Throwable arg1) {
+                    Log.i("SLAM", "Connection Failed.");
+                    Log.i("SLAM", ""+arg1);
+                }
+            });
+		} catch (MqttSecurityException e) {
+			e.printStackTrace();
+			Log.d("SLAM","MQTT Unable to Connect by Security");
+		} catch (MqttException e) {
+			e.printStackTrace();
+			Log.d("SLAM","MQTT Unable to Connect");
+		}
+	}
+
+	public void close(){
+		try {
+			client.disconnect();
+			Log.d("SLAM","MQTT Disconnected");
+		} catch (MqttException e) {
+			e.printStackTrace();
+			Log.d("SLAM","Unable to disconnect: "+e.toString());
+		}
+	}
 
 	/**
 	 * Performs a single publish
-	 * @param topic the topic to publish to
+	 * @param topic the topic to publish to/
 	 * @param message the message to publish
 	 * @param qos the qos to publish at
 	 * @throws MqttException
 	 */
+	public void publish(String topic, String message) {
+		//publish by default qos and retain
+		this.publish(topic,message,this.qos,this.retain);
+	}
 	public void publish(String topic, String message, int qos, boolean retained) {
 		if (!client.isConnected()){
 			Log.d("SLAM","MQTT not connected.");
 			return;
-		}
-		try {
-			// Get an instance of the topic
-			MqttTopic mqtttopic = client.getTopic(topic);
-
+		}else{
 			MqttMessage mqttmessage = new MqttMessage(message.getBytes());
-			mqttmessage.setQos(qos);
-			mqttmessage.setRetained(retained);
-
-			// Publish the message
-			MqttDeliveryToken token = mqtttopic.publish(mqttmessage);
-
-
-			// Wait until the message has been delivered to the server
-			token.waitForCompletion();
-
-		} catch (MqttException e) {
-			e.printStackTrace();
-			Log.d("SLAM","Unable to set up publish message: "+e.toString());
+			try {
+				//publish
+				client.publish(topic, mqttmessage);
+			} catch (MqttPersistenceException e) {
+				e.printStackTrace();
+			} catch (MqttException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -96,57 +130,39 @@ public class MqttClientService implements MqttCallback {
 	 * @param qos the qos to subscibe at
 	 * @throws MqttException
 	 */
+	public void subscribe(String topicName) {
+		//subscribe by default qos
+		this.subscribe(topicName, this.qos);
+	}
 	public void subscribe(String topicName, int qos) {
 		if (!client.isConnected()){
-			log("MQTT not connected.");
+			Log.d("SLAM","MQTT not connected.");
 			return;
 		}
-		log("Subscribing to topic \""+topicName+"\" qos "+qos);
+		Log.d("SLAM","Subscribing to topic \""+topicName+"\" qos "+qos);
 		try {
+			//subscribe
 			client.subscribe(topicName, qos);
 		} catch (MqttSecurityException e) {
 			e.printStackTrace();
-			log("Unable to set up subscribe message(MqttSecurityException): "+e.toString());
+			Log.d("SLAM","Unable to set up subscribe message(MqttSecurityException): "+e.toString());
 		} catch (MqttException e) {
 			e.printStackTrace();
-			log("Unable to set up subscribe message(MqttException): "+e.toString());
+			Log.d("SLAM","Unable to set up subscribe message(MqttException): "+e.toString());
 		}
 	}
 
 	public void unsubscribe(String topicName) {
 		if (!client.isConnected()){
-			log("MQTT not connected.");
+			Log.d("SLAM","MQTT not connected.");
 			return;
 		}
-		log("Unsubscribing to topic \""+topicName);
+		Log.d("SLAM","Unsubscribing to topic \""+topicName);
 		try {
 			client.unsubscribe(topicName);
 		} catch (MqttException e) {
 			e.printStackTrace();
-			log("Unable to unsubscribe(MqttException): "+e.toString());
-		}
-	}
-
-	public void connect(){
-		try {
-			client.connect(conOpt);
-			log("MQTT Connected");
-		} catch (MqttSecurityException e) {
-			e.printStackTrace();
-			log("MQTT Unable to Connect by Security");
-		} catch (MqttException e) {
-			e.printStackTrace();
-			log("MQTT Unable to Connect");
-		}
-	}
-
-	public void close(){
-		try {
-			client.disconnect();
-			log("MQTT Disconnected");
-		} catch (MqttException e) {
-			e.printStackTrace();
-			log("Unable to disconnect: "+e.toString());
+			Log.d("SLAM","Unable to unsubscribe(MqttException): "+e.toString());
 		}
 	}
 
@@ -164,17 +180,58 @@ public class MqttClientService implements MqttCallback {
 		// logic at this point.
 		// This sample simply exits.
 		Log.d("SLAM","Connection to " + uri + " lost!");
+		reconnect(100);
+	}
+
+    /// <summary>
+    /// Reconnect to MQTT Broker when client connection lost
+    /// </summary>
+    /// <param name="waitTime">wait time interval</param>
+	private void reconnect(int waitTime){
+		Log.d("SLAM","Client reconnecting... waitTime="+waitTime);
+		try {Thread.sleep(waitTime);} catch (InterruptedException e) {e.printStackTrace();}
+		try{
+			if(!client.isConnected()){
+				client.connect();
+			}
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (MqttException e) {
+			e.printStackTrace();
+		}finally{
+			try {Thread.sleep(100);} catch (InterruptedException e) {e.printStackTrace();}
+		}
+		if(client.isConnected()){
+			Log.d("SLAM","Client connected");
+			connected();
+			return;
+		}else{
+			waitTime = waitTime * 2;
+			if(waitTime < 10*60*1000){
+				reconnect(waitTime);
+				return;
+			}else{
+				Log.d("SLAM","Error: Cannot connect to MQTT broker. (in reconnect method)");
+				return;
+			}
+		}
+	}
+
+	/*
+	 * This method is called when connect() success.
+	 */
+	public void connected(){
+
 	}
 
 	@Override
 	public void messageArrived(String arg0, MqttMessage arg1) throws Exception {
-		// TODO 自動生成されたメソッド・スタブ
 
 	}
 
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken arg0) {
-		// TODO 自動生成されたメソッド・スタブ
 
 	}
 }

@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.TextView;
 
 public class ProcessingActivity extends Activity implements OnClickListener {
 
@@ -19,6 +20,9 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 	MqttClientService MCS;
 
 	PublishSensorData publishSensorData;
+
+	TextView text;
+	String log = "";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -32,14 +36,19 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		View buttonStop = findViewById(R.id.button_stop);
 		buttonStop.setOnClickListener(this);
 
-		//PublishSensorData (This is a thread.)
-		publishSensorData = new PublishSensorData();
+		//TextView
+		text = (TextView) findViewById(R.id.textView1);
+
+		//Init
+		init();
 	}
 
-	@Override
-	protected void onResume(){
-		super.onResume();
+	private void init(){
+		initMCS();
+		initPublishSensorData();
+	}
 
+	private void initMCS(){
 		//Mqtt login data
 		server = sp.getString("server", "");
 		port = Integer.parseInt(sp.getString("port", ""));
@@ -48,23 +57,43 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		clientId = sp.getString("clientId", "");
 
 		//MqttClientService
-		MCS = new MqttClientService(this,server,port,user,pass,clientId);
+		MCS = new MqttClientServiceEx(getApplicationContext(),server,port,user,pass,clientId);
+		MCS.setConf(Conf.qos,Conf.retain);
+
+		//Mqtt connect
+		MCS.connect();
+		log("Mqtt connecting...");
+		try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
+	}
+
+	private void initPublishSensorData(){
+		//PublishSensorData (This is a thread.)
+		publishSensorData = new PublishSensorData();
+		publishSensorData.setMCS(MCS);
+		publishSensorData.start();
+	}
+
+	private void log(String str){
+		log += str+"\n";
+		text.setText(log);
+	}
+
+	@Override
+	protected void onResume(){
+		super.onResume();
 
 		if(!publishSensorData.isAlive()){
 			publishSensorData.start();
 		}
 
-	}
-
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-	    if(keyCode == KeyEvent.KEYCODE_BACK) {
-	        //Back Key
-	    	publishSensorData.halt();
-	       return super.onKeyDown(keyCode, event);
-	    } else {
-	        return super.onKeyDown(keyCode, event);
-	    }
+//		if(MCS.client.isConnected()){
+//			log("Connected.");
+//		}else{
+//			log("Connection failed.");
+//			Log.d("SLAM", "Mqtt is not connected. Please try again.");
+//			Toast.makeText(this, getString(R.string.mqtt_not_connected),
+//					Toast.LENGTH_SHORT).show();
+//		}
 	}
 
 	@Override
@@ -84,6 +113,20 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		super.onDestroy();
 		Log.d("SLAM", "OnDestroy");
 		publishSensorData.halt();
+//    	if(MCS.client.isConnected()){
+//    		MCS.close();
+//    	}
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+	    if(keyCode == KeyEvent.KEYCODE_BACK) {
+	        //Back Key
+	    	publishSensorData.halt();
+	       return super.onKeyDown(keyCode, event);
+	    } else {
+	        return super.onKeyDown(keyCode, event);
+	    }
 	}
 
 	@Override

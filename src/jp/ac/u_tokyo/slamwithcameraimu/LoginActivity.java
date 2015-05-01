@@ -54,7 +54,6 @@ public class LoginActivity extends Activity implements OnClickListener {
         user.setText(userStr);
         pass.setText(passStr);
         clientId.setText(clientIdStr);
-
 	}
 
 	@Override
@@ -68,7 +67,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 			if (isOK) {
 				//Go back to MainActivity
 				Toast.makeText(this, getString(R.string.success),
-						Toast.LENGTH_LONG).show();
+						Toast.LENGTH_SHORT).show();
 				intent = new Intent(LoginActivity.this, MainActivity.class);
 				startActivity(intent);
 			}
