@@ -3,5 +3,7 @@
 
     <string name="app_name">SLAMwithCameraIMU</string>
     <string name="hello_world">Hello world!</string>
+    <string name="please_fill">Please fill in the form</string>
+    <string name="success">Success</string>
 
 </resources>

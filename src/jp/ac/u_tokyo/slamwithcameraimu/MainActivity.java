@@ -22,19 +22,19 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	@Override
-	  public void onClick(View v) {
+	public void onClick(View v) {
 		Intent intent;
 	    switch(v.getId()){
 	    case R.id.button_login:
-		      Log.d("BP", "SendMainRegister");
-		      intent = new Intent(MainActivity.this, LoginActivity.class);
-		      startActivity(intent);
-		      break;
+	    	Log.d("SLAM", "LoginActivity");
+	    	intent = new Intent(MainActivity.this, LoginActivity.class);
+	    	startActivity(intent);
+	    	break;
 	    case R.id.button_start:
-		      Log.d("BP", "SendMainRegister");
-		      intent = new Intent(MainActivity.this, ProcessingActivity.class);
-		      startActivity(intent);
-		      break;
+	    	Log.d("SLAM", "ProcessingActivity");
+	    	intent = new Intent(MainActivity.this, ProcessingActivity.class);
+	    	startActivity(intent);
+	    	break;
 	    }
-	  }
+	}
 }
