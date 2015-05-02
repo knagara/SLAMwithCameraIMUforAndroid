@@ -68,7 +68,7 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 
 	private void initPublishSensorData(){
 		//PublishSensorData (This is a thread.)
-		publishSensorData = new PublishSensorData();
+		publishSensorData = new PublishSensorData(getApplicationContext());
 		publishSensorData.setMCS(MCS);
 		publishSensorData.start();
 	}
