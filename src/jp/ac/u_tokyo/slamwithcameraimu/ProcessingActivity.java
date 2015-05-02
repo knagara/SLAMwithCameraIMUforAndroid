@@ -62,7 +62,7 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 
 		//Mqtt connect
 		MCS.connect();
-		log("Mqtt connecting...");
+//		log("Mqtt connecting...");
 		try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 	}
 
@@ -113,9 +113,6 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		super.onDestroy();
 		Log.d("SLAM", "OnDestroy");
 		publishSensorData.halt();
-//    	if(MCS.client.isConnected()){
-//    		MCS.close();
-//    	}
 	}
 
 	@Override
