@@ -43,18 +43,21 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 		//Register Accelerometer (加速度センサ)
 		List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
 		if(sensors.size() > 0) {
+			Log.d("SLAM","Accelerometer detected.");
 			Sensor s = sensors.get(0);
 			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
 		}
 		//Register Gyroscope (ジャイロスコープ)
 		sensors = mSensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
 		if(sensors.size() > 0) {
+			Log.d("SLAM","Gyroscope detected.");
 			Sensor s = sensors.get(0);
 			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
 		}
 		//Register Magnetic Field (地磁気センサ)
 		sensors = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
 		if(sensors.size() > 0) {
+			Log.d("SLAM","Magnetic Field detected.");
 			Sensor s = sensors.get(0);
 			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
 		}
@@ -75,12 +78,19 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	 */
 	public void run(){
 
+		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
+
 		while(!halt_){
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(20);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			//Get time in millisecond
+			long currentTimeMillis = System.currentTimeMillis();
+			String time = String.valueOf(currentTimeMillis);
+			//time
+			MCS.publish("SLAM/input/time", time);
 			//acceleration with gravity
 			MCS.publish("SLAM/input/acceleration_with_gravity/x", String.valueOf(acceleration_with_gravity[0]));
 			MCS.publish("SLAM/input/acceleration_with_gravity/y", String.valueOf(acceleration_with_gravity[1]));
@@ -106,6 +116,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	public void halt(){
 		if(!halt_){
 	    	Log.d("SLAM", "halt PublishSensorData");
+			MCS.publish("SLAM/input/stop", "true");
+			try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 			halt_ = true;
 			interrupt();
 		}
