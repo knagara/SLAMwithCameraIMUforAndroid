@@ -20,7 +20,13 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	//acceleration (加速度)
 	float[] acceleration_with_gravity = new float[3];
 	float[] acceleration = new float[3];
-	float[] acceleration_gravity = new float[3];
+	float[] acceleration_gravity = new float[3]; //計算用の一時変数
+
+	//Gyroscope （ジャイロスコープ）
+	float[] gyro = new float[3];
+
+	//Magnetic field （地磁気）
+	float[] magnet = new float[3];
 
 	/*
 	 * Constructor
@@ -36,6 +42,18 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 		mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
 		//Register Accelerometer (加速度センサ)
 		List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
+		if(sensors.size() > 0) {
+			Sensor s = sensors.get(0);
+			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
+		}
+		//Register Gyroscope (ジャイロスコープ)
+		sensors = mSensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
+		if(sensors.size() > 0) {
+			Sensor s = sensors.get(0);
+			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
+		}
+		//Register Magnetic Field (地磁気センサ)
+		sensors = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
 		if(sensors.size() > 0) {
 			Sensor s = sensors.get(0);
 			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
@@ -64,15 +82,22 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 				e.printStackTrace();
 			}
 			//acceleration with gravity
-			MCS.publish("SLAM/input/acceleration_withG/x", String.valueOf(acceleration_with_gravity[0]));
-			MCS.publish("SLAM/input/acceleration_withG/y", String.valueOf(acceleration_with_gravity[1]));
-			MCS.publish("SLAM/input/acceleration_withG/z", String.valueOf(acceleration_with_gravity[2]));
+			MCS.publish("SLAM/input/acceleration_with_gravity/x", String.valueOf(acceleration_with_gravity[0]));
+			MCS.publish("SLAM/input/acceleration_with_gravity/y", String.valueOf(acceleration_with_gravity[1]));
+			MCS.publish("SLAM/input/acceleration_with_gravity/z", String.valueOf(acceleration_with_gravity[2]));
 			//acceleration
 			MCS.publish("SLAM/input/acceleration/x", String.valueOf(acceleration[0]));
 			MCS.publish("SLAM/input/acceleration/y", String.valueOf(acceleration[1]));
 			MCS.publish("SLAM/input/acceleration/z", String.valueOf(acceleration[2]));
+			//Gyro
+			MCS.publish("SLAM/input/gyro/x", String.valueOf(gyro[0]));
+			MCS.publish("SLAM/input/gyro/y", String.valueOf(gyro[1]));
+			MCS.publish("SLAM/input/gyro/z", String.valueOf(gyro[2]));
+			//Magnet
+			MCS.publish("SLAM/input/magnet/x", String.valueOf(magnet[0]));
+			MCS.publish("SLAM/input/magnet/y", String.valueOf(magnet[1]));
+			MCS.publish("SLAM/input/magnet/z", String.valueOf(magnet[2]));
 		}
-
 	}
 
 	/*
@@ -102,6 +127,18 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         	//Calc acceleration without gravity.
         	Utils.extractGravity(event.values, acceleration_gravity, acceleration);
             break;
+        case Sensor.TYPE_GYROSCOPE:
+        	//Gyroscope
+        	gyro[0] = event.values[0];
+        	gyro[1] = event.values[1];
+        	gyro[2] = event.values[2];
+        	break;
+        case Sensor.TYPE_MAGNETIC_FIELD:
+        	//Magnetic field
+        	magnet[0] = event.values[0];
+        	magnet[1] = event.values[1];
+        	magnet[2] = event.values[2];
+        	break;
         }
 	}
 
