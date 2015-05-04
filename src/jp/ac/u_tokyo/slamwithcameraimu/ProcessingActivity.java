@@ -29,6 +29,8 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_processing);
 
+		Log.d("SLAM", "OnCreate");
+
 		//Preferences
 		sp = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -63,13 +65,14 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		//Mqtt connect
 		MCS.connect();
 //		log("Mqtt connecting...");
-		try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
+		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 	}
 
 	private void initPublishSensorData(){
 		//PublishSensorData (This is a thread.)
 		publishSensorData = new PublishSensorData(getApplicationContext());
 		publishSensorData.setMCS(MCS);
+		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 		publishSensorData.start();
 	}
 
@@ -81,6 +84,7 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 	@Override
 	protected void onResume(){
 		super.onResume();
+		Log.d("SLAM", "OnResume");
 
 		if(!publishSensorData.isAlive()){
 			publishSensorData.start();

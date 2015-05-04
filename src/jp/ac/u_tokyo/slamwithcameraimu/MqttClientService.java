@@ -69,30 +69,30 @@ public class MqttClientService implements MqttCallback {
             client.connect(conOpt, null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken arg0) {
-                    Log.i("SLAM", "Connection Successful.");
+                    Log.i("MQTT", "Connection Successful.");
                 }
                 @Override
                 public void onFailure(IMqttToken arg0, Throwable arg1) {
-                    Log.i("SLAM", "Connection Failed.");
-                    Log.i("SLAM", ""+arg1);
+                    Log.i("MQTT", "Connection Failed.");
+                    Log.i("MQTT", ""+arg1);
                 }
             });
 		} catch (MqttSecurityException e) {
 			e.printStackTrace();
-			Log.d("SLAM","MQTT Unable to Connect by Security");
+			Log.d("MQTT","MQTT Unable to Connect by Security");
 		} catch (MqttException e) {
 			e.printStackTrace();
-			Log.d("SLAM","MQTT Unable to Connect");
+			Log.d("MQTT","MQTT Unable to Connect");
 		}
 	}
 
 	public void close(){
 		try {
 			client.disconnect();
-			Log.d("SLAM","MQTT Disconnected");
+			Log.d("MQTT","MQTT Disconnected");
 		} catch (MqttException e) {
 			e.printStackTrace();
-			Log.d("SLAM","Unable to disconnect: "+e.toString());
+			Log.d("MQTT","Unable to disconnect: "+e.toString());
 		}
 	}
 
@@ -109,7 +109,7 @@ public class MqttClientService implements MqttCallback {
 	}
 	public void publish(String topic, String message, int qos, boolean retained) {
 		if (!client.isConnected()){
-			Log.d("SLAM","MQTT not connected.");
+			Log.d("MQTT","MQTT not connected.");
 			return;
 		}else{
 			MqttMessage mqttmessage = new MqttMessage(message.getBytes());
@@ -136,33 +136,33 @@ public class MqttClientService implements MqttCallback {
 	}
 	public void subscribe(String topicName, int qos) {
 		if (!client.isConnected()){
-			Log.d("SLAM","MQTT not connected.");
+			Log.d("MQTT","MQTT not connected.");
 			return;
 		}
-		Log.d("SLAM","Subscribing to topic \""+topicName+"\" qos "+qos);
+		Log.d("MQTT","Subscribing to topic \""+topicName+"\" qos "+qos);
 		try {
 			//subscribe
 			client.subscribe(topicName, qos);
 		} catch (MqttSecurityException e) {
 			e.printStackTrace();
-			Log.d("SLAM","Unable to set up subscribe message(MqttSecurityException): "+e.toString());
+			Log.d("MQTT","Unable to set up subscribe message(MqttSecurityException): "+e.toString());
 		} catch (MqttException e) {
 			e.printStackTrace();
-			Log.d("SLAM","Unable to set up subscribe message(MqttException): "+e.toString());
+			Log.d("MQTT","Unable to set up subscribe message(MqttException): "+e.toString());
 		}
 	}
 
 	public void unsubscribe(String topicName) {
 		if (!client.isConnected()){
-			Log.d("SLAM","MQTT not connected.");
+			Log.d("MQTT","MQTT not connected.");
 			return;
 		}
-		Log.d("SLAM","Unsubscribing to topic \""+topicName);
+		Log.d("MQTT","Unsubscribing to topic \""+topicName);
 		try {
 			client.unsubscribe(topicName);
 		} catch (MqttException e) {
 			e.printStackTrace();
-			Log.d("SLAM","Unable to unsubscribe(MqttException): "+e.toString());
+			Log.d("MQTT","Unable to unsubscribe(MqttException): "+e.toString());
 		}
 	}
 
@@ -179,7 +179,7 @@ public class MqttClientService implements MqttCallback {
 		// An application may choose to implement reconnection
 		// logic at this point.
 		// This sample simply exits.
-		Log.d("SLAM","Connection to " + uri + " lost!");
+		Log.d("MQTT","Connection to " + uri + " lost!");
 		reconnect(100);
 	}
 
@@ -188,7 +188,7 @@ public class MqttClientService implements MqttCallback {
     /// </summary>
     /// <param name="waitTime">wait time interval</param>
 	private void reconnect(int waitTime){
-		Log.d("SLAM","Client reconnecting... waitTime="+waitTime);
+		Log.d("MQTT","Client reconnecting... waitTime="+waitTime);
 		try {Thread.sleep(waitTime);} catch (InterruptedException e) {e.printStackTrace();}
 		try{
 			if(!client.isConnected()){
@@ -203,7 +203,7 @@ public class MqttClientService implements MqttCallback {
 			try {Thread.sleep(100);} catch (InterruptedException e) {e.printStackTrace();}
 		}
 		if(client.isConnected()){
-			Log.d("SLAM","Client connected");
+			Log.d("MQTT","Client connected");
 			connected();
 			return;
 		}else{
@@ -212,7 +212,7 @@ public class MqttClientService implements MqttCallback {
 				reconnect(waitTime);
 				return;
 			}else{
-				Log.d("SLAM","Error: Cannot connect to MQTT broker. (in reconnect method)");
+				Log.d("MQTT","Error: Cannot connect to MQTT broker. (in reconnect method)");
 				return;
 			}
 		}

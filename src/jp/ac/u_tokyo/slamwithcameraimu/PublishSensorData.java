@@ -28,6 +28,14 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	//Magnetic field （地磁気）
 	float[] magnet = new float[3];
 
+	//Orientation (傾き)
+	float[] orientation = new float[3];
+	//Rotation matrix
+	private static final int MATRIX_SIZE = 16;
+	float[] inR = new float[MATRIX_SIZE];
+	float[] outR = new float[MATRIX_SIZE];
+	float[] I = new float[MATRIX_SIZE];
+
 	/*
 	 * Constructor
 	 * Register sensors here.
@@ -45,21 +53,28 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 		if(sensors.size() > 0) {
 			Log.d("SLAM","Accelerometer detected.");
 			Sensor s = sensors.get(0);
-			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
+			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
 		}
 		//Register Gyroscope (ジャイロスコープ)
 		sensors = mSensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
 		if(sensors.size() > 0) {
 			Log.d("SLAM","Gyroscope detected.");
 			Sensor s = sensors.get(0);
-			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
+			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
 		}
 		//Register Magnetic Field (地磁気センサ)
-		sensors = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
+//		sensors = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
+//		if(sensors.size() > 0) {
+//			Log.d("SLAM","Magnetic Field detected.");
+//			Sensor s = sensors.get(0);
+//			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
+//		}
+		//Register Orientaion (方位センサ)
+		sensors = mSensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
 		if(sensors.size() > 0) {
-			Log.d("SLAM","Magnetic Field detected.");
+			Log.d("SLAM","Orientation detected.");
 			Sensor s = sensors.get(0);
-			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
+			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
 		}
 	}
 
@@ -78,11 +93,11 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	 */
 	public void run(){
 
-		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
+//		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 
 		while(!halt_){
 			try {
-				Thread.sleep(20);
+				Thread.sleep(50);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -90,23 +105,52 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			long currentTimeMillis = System.currentTimeMillis();
 			String time = String.valueOf(currentTimeMillis);
 			//time
-			MCS.publish("SLAM/input/time", time);
+			//MCS.publish("SLAM/input/time", time);
+			//try { Thread.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
+			//data
+			String data = null;
 			//acceleration with gravity
-			MCS.publish("SLAM/input/acceleration_with_gravity/x", String.valueOf(acceleration_with_gravity[0]));
-			MCS.publish("SLAM/input/acceleration_with_gravity/y", String.valueOf(acceleration_with_gravity[1]));
-			MCS.publish("SLAM/input/acceleration_with_gravity/z", String.valueOf(acceleration_with_gravity[2]));
+//			data = time + "," + String.valueOf(acceleration_with_gravity[0]) + "," +
+//								String.valueOf(acceleration_with_gravity[1]) + "," +
+//								String.valueOf(acceleration_with_gravity[2]);
+//			MCS.publish("SLAM/input/acceleration_with_gravity", data);
+//			try { Thread.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
 			//acceleration
-			MCS.publish("SLAM/input/acceleration/x", String.valueOf(acceleration[0]));
-			MCS.publish("SLAM/input/acceleration/y", String.valueOf(acceleration[1]));
-			MCS.publish("SLAM/input/acceleration/z", String.valueOf(acceleration[2]));
+			data = time + "," + String.valueOf(acceleration[0]) + "," +
+								String.valueOf(acceleration[1]) + "," +
+								String.valueOf(acceleration[2]);
+			MCS.publish("SLAM/input/acceleration", data);
+			try { Thread.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
 			//Gyro
-			MCS.publish("SLAM/input/gyro/x", String.valueOf(gyro[0]));
-			MCS.publish("SLAM/input/gyro/y", String.valueOf(gyro[1]));
-			MCS.publish("SLAM/input/gyro/z", String.valueOf(gyro[2]));
+			data = time + "," + String.valueOf(gyro[0]) + "," +
+								String.valueOf(gyro[1]) + "," +
+								String.valueOf(gyro[2]);
+			MCS.publish("SLAM/input/gyro", data);
+			try { Thread.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
 			//Magnet
-			MCS.publish("SLAM/input/magnet/x", String.valueOf(magnet[0]));
-			MCS.publish("SLAM/input/magnet/y", String.valueOf(magnet[1]));
-			MCS.publish("SLAM/input/magnet/z", String.valueOf(magnet[2]));
+//			data = time + "," + String.valueOf(magnet[0]) + "," +
+//								String.valueOf(magnet[1]) + "," +
+//								String.valueOf(magnet[2]);
+//			MCS.publish("SLAM/input/magnet", data);
+//			try { Thread.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
+			//Orientation
+			data = time + "," + String.valueOf(orientation[0]) + "," +
+								String.valueOf(orientation[1]) + "," +
+								String.valueOf(orientation[2]);
+			MCS.publish("SLAM/input/orientation", data);
+			try { Thread.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
+			//Orientation (加速度センサと地磁気センサから計算)
+			// 回転行列を計算
+//			SensorManager.getRotationMatrix(inR, I, acceleration_with_gravity, magnet);
+//			// 端末の画面設定に合わせる(以下は, 縦表示で画面を上にした場合)
+//			SensorManager.remapCoordinateSystem(inR, SensorManager.AXIS_X, SensorManager.AXIS_Y, outR);
+//			// 方位角/傾きを取得
+//			SensorManager.getOrientation(outR, orientation);
+//			data = time + "," + String.valueOf(Math.toDegrees(orientation[0])) + "," +
+//					String.valueOf(Math.toDegrees(orientation[1])) + "," +
+//					String.valueOf(Math.toDegrees(orientation[2]));
+//			MCS.publish("SLAM/input/orientation", data);
+//			try { Thread.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
 		}
 	}
 
@@ -115,10 +159,14 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	 */
 	public void halt(){
 		if(!halt_){
-	    	Log.d("SLAM", "halt PublishSensorData");
-			MCS.publish("SLAM/input/stop", "true");
-			try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 			halt_ = true;
+	    	Log.d("SLAM", "halt PublishSensorData");
+			try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(); }
+			MCS.publish("SLAM/input/stop", "true");
+			if (mSensorManager != null) {
+				mSensorManager.unregisterListener(this);
+				Log.d("SLAM","SensorManager unregister");
+	        }
 			interrupt();
 		}
 	}
@@ -133,9 +181,9 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         switch(event.sensor.getType()){
         case Sensor.TYPE_ACCELEROMETER:
         	//acceleration raw data (with gravity)
-        	acceleration_with_gravity[0] = event.values[0];
-        	acceleration_with_gravity[1] = event.values[1];
-        	acceleration_with_gravity[2] = event.values[2];
+//        	acceleration_with_gravity[0] = event.values[0];
+//        	acceleration_with_gravity[1] = event.values[1];
+//        	acceleration_with_gravity[2] = event.values[2];
         	//Calc acceleration without gravity.
         	Utils.extractGravity(event.values, acceleration_gravity, acceleration);
             break;
@@ -145,11 +193,17 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         	gyro[1] = event.values[1];
         	gyro[2] = event.values[2];
         	break;
-        case Sensor.TYPE_MAGNETIC_FIELD:
+//        case Sensor.TYPE_MAGNETIC_FIELD:
+//        	//Magnetic field
+//        	magnet[0] = event.values[0];
+//        	magnet[1] = event.values[1];
+//        	magnet[2] = event.values[2];
+//        	break;
+        case Sensor.TYPE_ORIENTATION:
         	//Magnetic field
-        	magnet[0] = event.values[0];
-        	magnet[1] = event.values[1];
-        	magnet[2] = event.values[2];
+        	orientation[0] = event.values[0];
+        	orientation[1] = event.values[1];
+        	orientation[2] = event.values[2];
         	break;
         }
 	}
