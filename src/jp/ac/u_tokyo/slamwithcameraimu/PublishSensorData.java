@@ -110,11 +110,11 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			//data
 			String data = null;
 			//acceleration with gravity
-//			data = time + "," + String.valueOf(acceleration_with_gravity[0]) + "," +
-//								String.valueOf(acceleration_with_gravity[1]) + "," +
-//								String.valueOf(acceleration_with_gravity[2]);
-//			MCS.publish("SLAM/input/acceleration_with_gravity", data);
-//			try { Thread.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
+			data = time + "," + String.valueOf(acceleration_with_gravity[0]) + "," +
+								String.valueOf(acceleration_with_gravity[1]) + "," +
+								String.valueOf(acceleration_with_gravity[2]);
+			MCS.publish("SLAM/input/acceleration_with_gravity", data);
+			try { Thread.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
 			//acceleration
 			data = time + "," + String.valueOf(acceleration[0]) + "," +
 								String.valueOf(acceleration[1]) + "," +
@@ -181,9 +181,9 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         switch(event.sensor.getType()){
         case Sensor.TYPE_ACCELEROMETER:
         	//acceleration raw data (with gravity)
-//        	acceleration_with_gravity[0] = event.values[0];
-//        	acceleration_with_gravity[1] = event.values[1];
-//        	acceleration_with_gravity[2] = event.values[2];
+        	acceleration_with_gravity[0] = event.values[0];
+        	acceleration_with_gravity[1] = event.values[1];
+        	acceleration_with_gravity[2] = event.values[2];
         	//Calc acceleration without gravity.
         	Utils.extractGravity(event.values, acceleration_gravity, acceleration);
             break;
