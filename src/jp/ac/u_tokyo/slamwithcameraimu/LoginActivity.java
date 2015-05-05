@@ -15,7 +15,7 @@ import android.widget.Toast;
 public class LoginActivity extends Activity implements OnClickListener {
 
 	SharedPreferences sp;
-	EditText server, port, user, pass, clientId;
+	EditText server, port, user, pass, clientId, rate;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +35,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 		user = (EditText) findViewById(R.id.editText3);
 		pass = (EditText) findViewById(R.id.editText4);
 		clientId = (EditText) findViewById(R.id.editText5);
+		rate = (EditText) findViewById(R.id.editText6);
 	}
 
 	@Override
@@ -47,6 +48,7 @@ public class LoginActivity extends Activity implements OnClickListener {
         String userStr = sp.getString("user", "");
         String passStr = sp.getString("pass", "");
         String clientIdStr = sp.getString("clientId", "");
+        String rateStr = sp.getString("rate", "");
 
         //Set data to the form
         server.setText(serverStr);
@@ -54,6 +56,7 @@ public class LoginActivity extends Activity implements OnClickListener {
         user.setText(userStr);
         pass.setText(passStr);
         clientId.setText(clientIdStr);
+        rate.setText(rateStr);
 	}
 
 	@Override
@@ -80,7 +83,8 @@ public class LoginActivity extends Activity implements OnClickListener {
 				|| port.getText().toString().equals("")
 				|| user.getText().toString().equals("")
 				|| pass.getText().toString().equals("")
-				|| clientId.getText().toString().equals("")) {
+				|| clientId.getText().toString().equals("")
+				|| rate.getText().toString().equals("")) {
 
 			Toast.makeText(this, getString(R.string.please_fill),
 					Toast.LENGTH_SHORT).show();
@@ -93,6 +97,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 			edit.putString("user", user.getText().toString());
 			edit.putString("pass", pass.getText().toString());
 			edit.putString("clientId", clientId.getText().toString());
+			edit.putString("rate", rate.getText().toString());
 			edit.commit();
 			return true;
 		}

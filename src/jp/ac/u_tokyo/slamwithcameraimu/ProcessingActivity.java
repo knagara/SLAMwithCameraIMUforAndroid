@@ -72,6 +72,7 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		//PublishSensorData (This is a thread.)
 		publishSensorData = new PublishSensorData(getApplicationContext());
 		publishSensorData.setMCS(MCS);
+		publishSensorData.setRate(Integer.parseInt(sp.getString("rate", "20")));
 		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 		publishSensorData.start();
 	}
