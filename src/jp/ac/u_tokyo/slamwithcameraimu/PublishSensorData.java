@@ -21,6 +21,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	int sleepTime = 50;
 
 	//acceleration (加速度)
+	boolean isAccelWithGravity = false;
 	float[] acceleration_with_gravity = new float[3];
 	float[] acceleration = new float[3];
 	float[] acceleration_gravity = new float[3]; //計算用の一時変数
@@ -70,12 +71,12 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
 		}
 		//Register Accelerometer without Gravity (加速度センサ without 重力)
-//		sensors = mSensorManager.getSensorList(Sensor.TYPE_LINEAR_ACCELERATION);
-//		if(sensors.size() > 0) {
-//			Log.d("SLAM","Linear Acceleration detected.");
-//			Sensor s = sensors.get(0);
-//			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
-//		}
+		sensors = mSensorManager.getSensorList(Sensor.TYPE_LINEAR_ACCELERATION);
+		if(sensors.size() > 0) {
+			Log.d("SLAM","Linear Acceleration detected.");
+			Sensor s = sensors.get(0);
+			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
+		}
 		//Register Gyroscope (ジャイロスコープ)
 		sensors = mSensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
 		if(sensors.size() > 0) {
@@ -114,6 +115,17 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	}
 
 	/*
+	 * Set isAccelWithGravity
+	 */
+	public void setIsAccelWithGravity(int flag){
+		if(flag == 1){
+			isAccelWithGravity = true;
+		}else{
+			isAccelWithGravity = false;
+		}
+	}
+
+	/*
 	 * Main part of this thread
 	 * Publish sensor data via MQTT.
 	 * (非 Javadoc)
@@ -133,21 +145,21 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			long currentTimeMillis = System.currentTimeMillis();
 			String time = String.valueOf(currentTimeMillis);
 			String data = null;
-			data = time + "," +
-					String.valueOf(acceleration[0]) + "," +
-					String.valueOf(acceleration[1]) + "," +
-					String.valueOf(acceleration[2]) + "," +
-					String.valueOf(gravity[0]) + "," +
-					String.valueOf(gravity[1]) + "," +
-					String.valueOf(gravity[2]) + "," +
-					String.valueOf(magnet[0]) + "," +
-					String.valueOf(magnet[1]) + "," +
-					String.valueOf(magnet[2]) + "," +
-					String.valueOf(gyro[0]) + "," +
-					String.valueOf(gyro[1]) + "," +
-					String.valueOf(gyro[2]) + "," +
-					String.valueOf(ori[0]) + "," +
-					String.valueOf(ori[1]) + "," +
+			data = time + "&" +
+					String.valueOf(acceleration[0]) + "&" +
+					String.valueOf(acceleration[1]) + "&" +
+					String.valueOf(acceleration[2]) + "&" +
+					String.valueOf(gravity[0]) + "&" +
+					String.valueOf(gravity[1]) + "&" +
+					String.valueOf(gravity[2]) + "&" +
+					String.valueOf(magnet[0]) + "&" +
+					String.valueOf(magnet[1]) + "&" +
+					String.valueOf(magnet[2]) + "&" +
+					String.valueOf(gyro[0]) + "&" +
+					String.valueOf(gyro[1]) + "&" +
+					String.valueOf(gyro[2]) + "&" +
+					String.valueOf(ori[0]) + "&" +
+					String.valueOf(ori[1]) + "&" +
 					String.valueOf(ori[2]);
 			MCS.publish("SLAM/input/all", data);
 			/*
@@ -237,28 +249,35 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         switch(event.sensor.getType()){
         case Sensor.TYPE_ACCELEROMETER:
         	//acceleration raw data (with gravity)
-        	acceleration_with_gravity = event.values.clone();
+        	if(isAccelWithGravity){
+//        		acceleration = event.values.clone();
+        		Utils.lowPassFilter(acceleration,event.values);
+        	}
+//        	Utils.lowPassFilter(acceleration,event.values);
         	//Calc acceleration without gravity.
-        	Utils.extractGravity(event.values, acceleration_gravity, acceleration);
+//        	Utils.myExtractGravity(acceleration_with_gravity, gravity);
+//        	Utils.extractGravity(event.values, acceleration_gravity, acceleration);
             break;
         case Sensor.TYPE_GRAVITY:
-        	gravity = event.values.clone();
+//        	gravity = event.values.clone();
+        	Utils.lowPassFilter(gravity,event.values);
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
-//        	acceleration = event.values.clone();
+        	if(!isAccelWithGravity){
+//        		acceleration = event.values.clone();
+        		Utils.lowPassFilter(acceleration,event.values);
+        	}
             break;
         case Sensor.TYPE_GYROSCOPE:
-        	gyro = event.values.clone();
+//        	gyro = event.values.clone();
+        	Utils.lowPassFilter(gyro,event.values);
         	break;
         case Sensor.TYPE_MAGNETIC_FIELD:
-        	magnet = event.values.clone();
+//        	magnet = event.values.clone();
+        	Utils.lowPassFilter(magnet,event.values);
         	break;
         case Sensor.TYPE_ORIENTATION:
         	ori = event.values.clone();
-        	//Low-pass filter
-//            ori[0] = (float) (ori[0]*0.9 + event.values[0]*0.1);
-//            ori[1] = (float) (ori[1]*0.9 + event.values[1]*0.1);
-//            ori[2] = (float) (ori[2]*0.9 + event.values[2]*0.1);
             break;
         }
 	}

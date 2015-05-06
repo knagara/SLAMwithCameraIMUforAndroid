@@ -15,7 +15,7 @@ import android.widget.Toast;
 public class LoginActivity extends Activity implements OnClickListener {
 
 	SharedPreferences sp;
-	EditText server, port, user, pass, clientId, rate;
+	EditText server, port, user, pass, clientId, rate, accel_g;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +36,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 		pass = (EditText) findViewById(R.id.editText4);
 		clientId = (EditText) findViewById(R.id.editText5);
 		rate = (EditText) findViewById(R.id.editText6);
+		accel_g = (EditText) findViewById(R.id.editText7);
 	}
 
 	@Override
@@ -49,6 +50,7 @@ public class LoginActivity extends Activity implements OnClickListener {
         String passStr = sp.getString("pass", "");
         String clientIdStr = sp.getString("clientId", "");
         String rateStr = sp.getString("rate", "");
+        String accel_gStr = sp.getString("accel_g", "");
 
         //Set data to the form
         server.setText(serverStr);
@@ -57,6 +59,7 @@ public class LoginActivity extends Activity implements OnClickListener {
         pass.setText(passStr);
         clientId.setText(clientIdStr);
         rate.setText(rateStr);
+        accel_g.setText(accel_gStr);
 	}
 
 	@Override
@@ -84,7 +87,8 @@ public class LoginActivity extends Activity implements OnClickListener {
 				|| user.getText().toString().equals("")
 				|| pass.getText().toString().equals("")
 				|| clientId.getText().toString().equals("")
-				|| rate.getText().toString().equals("")) {
+				|| rate.getText().toString().equals("")
+				|| accel_g.getText().toString().equals("")) {
 
 			Toast.makeText(this, getString(R.string.please_fill),
 					Toast.LENGTH_SHORT).show();
@@ -98,6 +102,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 			edit.putString("pass", pass.getText().toString());
 			edit.putString("clientId", clientId.getText().toString());
 			edit.putString("rate", rate.getText().toString());
+			edit.putString("accel_g", accel_g.getText().toString());
 			edit.commit();
 			return true;
 		}
