@@ -24,6 +24,9 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	float[] acceleration_with_gravity = new float[3];
 	float[] acceleration = new float[3];
 	float[] acceleration_gravity = new float[3]; //計算用の一時変数
+	
+	//gravity (重力)
+	float[] gravity = new float[3];
 
 	//Gyroscope （ジャイロスコープ）
 	float[] gyro = new float[3];
@@ -59,13 +62,20 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			Sensor s = sensors.get(0);
 			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
 		}
-		//Register Accelerometer without Gravity (加速度センサ without 重力)
-		sensors = mSensorManager.getSensorList(Sensor.TYPE_LINEAR_ACCELERATION);
+		//Register Gravity (重力センサ)
+		sensors = mSensorManager.getSensorList(Sensor.TYPE_GRAVITY);
 		if(sensors.size() > 0) {
-			Log.d("SLAM","Linear Acceleration detected.");
+			Log.d("SLAM","Gravity detected.");
 			Sensor s = sensors.get(0);
 			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
 		}
+		//Register Accelerometer without Gravity (加速度センサ without 重力)
+//		sensors = mSensorManager.getSensorList(Sensor.TYPE_LINEAR_ACCELERATION);
+//		if(sensors.size() > 0) {
+//			Log.d("SLAM","Linear Acceleration detected.");
+//			Sensor s = sensors.get(0);
+//			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
+//		}
 		//Register Gyroscope (ジャイロスコープ)
 		sensors = mSensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
 		if(sensors.size() > 0) {
@@ -122,22 +132,46 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			//Get time in millisecond
 			long currentTimeMillis = System.currentTimeMillis();
 			String time = String.valueOf(currentTimeMillis);
+			String data = null;
+			data = time + "," +
+					String.valueOf(acceleration[0]) + "," +
+					String.valueOf(acceleration[1]) + "," +
+					String.valueOf(acceleration[2]) + "," +
+					String.valueOf(gravity[0]) + "," +
+					String.valueOf(gravity[1]) + "," +
+					String.valueOf(gravity[2]) + "," +
+					String.valueOf(magnet[0]) + "," +
+					String.valueOf(magnet[1]) + "," +
+					String.valueOf(magnet[2]) + "," +
+					String.valueOf(gyro[0]) + "," +
+					String.valueOf(gyro[1]) + "," +
+					String.valueOf(gyro[2]) + "," +
+					String.valueOf(ori[0]) + "," +
+					String.valueOf(ori[1]) + "," +
+					String.valueOf(ori[2]);
+			MCS.publish("SLAM/input/all", data);
+			/*
 			//time
 			//MCS.publish("SLAM/input/time", time);
 			//try { Thread.sleep(1); } catch (InterruptedException e) { e.printStackTrace(); }
 			//data
-			String data = null;
 //			acceleration with gravity
-			data = time + "," + String.valueOf(acceleration_with_gravity[0]) + "," +
-								String.valueOf(acceleration_with_gravity[1]) + "," +
-								String.valueOf(acceleration_with_gravity[2]);
-			MCS.publish("SLAM/input/acceleration_with_gravity", data);
-			try { Thread.sleep(1); } catch (InterruptedException e) { e.printStackTrace(); }
+//			data = time + "," + String.valueOf(acceleration_with_gravity[0]) + "," +
+//								String.valueOf(acceleration_with_gravity[1]) + "," +
+//								String.valueOf(acceleration_with_gravity[2]);
+//			MCS.publish("SLAM/input/acceleration_with_gravity", data);
+//			try { Thread.sleep(1); } catch (InterruptedException e) { e.printStackTrace(); }
 			//acceleration
 			data = time + "," + String.valueOf(acceleration[0]) + "," +
 								String.valueOf(acceleration[1]) + "," +
 								String.valueOf(acceleration[2]);
 			MCS.publish("SLAM/input/acceleration", data);
+			try { Thread.sleep(1); } catch (InterruptedException e) { e.printStackTrace(); }
+			//gravity
+			data = time + "," + String.valueOf(gravity[0]) + "," +
+								String.valueOf(gravity[1]) + "," +
+								String.valueOf(gravity[2]);
+			MCS.publish("SLAM/input/gravity", data);
 			try { Thread.sleep(1); } catch (InterruptedException e) { e.printStackTrace(); }
 			//Gyro
 			data = time + "," + String.valueOf(gyro[0]) + "," +
@@ -172,6 +206,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //					String.valueOf(Math.toDegrees(orientation[2]));
 //			MCS.publish("SLAM/input/orientation", data);
 //			try { Thread.sleep(1); } catch (InterruptedException e) { e.printStackTrace(); }
+ */
 		}
 	}
 
@@ -206,23 +241,19 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         	//Calc acceleration without gravity.
         	Utils.extractGravity(event.values, acceleration_gravity, acceleration);
             break;
+        case Sensor.TYPE_GRAVITY:
+        	gravity = event.values.clone();
+            break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
-        	//acceleration raw data (with gravity)
 //        	acceleration = event.values.clone();
-//        	acceleration[0] = (float) (acceleration[0]*0.9 + event.values[0]*0.1);
-//        	acceleration[1] = (float) (acceleration[1]*0.9 + event.values[1]*0.1);
-//        	acceleration[2] = (float) (acceleration[2]*0.9 + event.values[2]*0.1);
             break;
         case Sensor.TYPE_GYROSCOPE:
-        	//Gyroscope
         	gyro = event.values.clone();
         	break;
         case Sensor.TYPE_MAGNETIC_FIELD:
-//        	//Magnetic field
         	magnet = event.values.clone();
         	break;
         case Sensor.TYPE_ORIENTATION:
-        	//Orientation
         	ori = event.values.clone();
         	//Low-pass filter
 //            ori[0] = (float) (ori[0]*0.9 + event.values[0]*0.1);

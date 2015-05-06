@@ -7,18 +7,18 @@
     <Button
         android:id="@+id/button_login"
         android:layout_width="200dp"
-        android:layout_height="wrap_content"
+        android:layout_height="80dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="104dp"
+        android:layout_marginTop="150dp"
         android:text="Login" />
 
     <Button
         android:id="@+id/button_start"
         android:layout_width="200dp"
-        android:layout_height="wrap_content"
+        android:layout_height="80dp"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
+        android:layout_marginTop="250dp"
         android:text="Start" />
 
 </RelativeLayout>
