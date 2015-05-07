@@ -21,7 +21,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	int sleepTime = 50;
 
 	//acceleration (加速度)
-	boolean isAccelWithGravity = false;
+	int accelType = 0;
 	float[] acceleration_with_gravity = new float[3];
 	float[] acceleration = new float[3];
 	float[] acceleration_gravity = new float[3]; //計算用の一時変数
@@ -115,14 +115,10 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	}
 
 	/*
-	 * Set isAccelWithGravity
+	 * Set accel type
 	 */
-	public void setIsAccelWithGravity(int flag){
-		if(flag == 1){
-			isAccelWithGravity = true;
-		}else{
-			isAccelWithGravity = false;
-		}
+	public void setAccelType(int type){
+		this.accelType = type;
 	}
 
 	/*
@@ -248,22 +244,19 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	public void onSensorChanged(SensorEvent event) {
         switch(event.sensor.getType()){
         case Sensor.TYPE_ACCELEROMETER:
-        	//acceleration raw data (with gravity)
-        	if(isAccelWithGravity){
+        	if(accelType == 0){
 //        		acceleration = event.values.clone();
         		Utils.lowPassFilter(acceleration,event.values);
+        	}else if(accelType == 1){
+            	Utils.extractGravity(event.values, acceleration_gravity, acceleration);
         	}
-//        	Utils.lowPassFilter(acceleration,event.values);
-        	//Calc acceleration without gravity.
-//        	Utils.myExtractGravity(acceleration_with_gravity, gravity);
-//        	Utils.extractGravity(event.values, acceleration_gravity, acceleration);
             break;
         case Sensor.TYPE_GRAVITY:
 //        	gravity = event.values.clone();
         	Utils.lowPassFilter(gravity,event.values);
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
-        	if(!isAccelWithGravity){
+        	if(accelType == 2){
 //        		acceleration = event.values.clone();
         		Utils.lowPassFilter(acceleration,event.values);
         	}

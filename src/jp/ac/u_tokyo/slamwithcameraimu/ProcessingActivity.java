@@ -73,7 +73,7 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		publishSensorData = new PublishSensorData(getApplicationContext());
 		publishSensorData.setMCS(MCS);
 		publishSensorData.setRate(Integer.parseInt(sp.getString("rate", "20")));
-		publishSensorData.setIsAccelWithGravity(Integer.parseInt(sp.getString("accel_g", "0")));
+		publishSensorData.setAccelType(Integer.parseInt(sp.getString("accel_g", "0")));
 		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 		publishSensorData.start();
 	}

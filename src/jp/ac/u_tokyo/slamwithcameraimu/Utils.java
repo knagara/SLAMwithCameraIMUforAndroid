@@ -25,21 +25,6 @@ public class Utils {
 		linearAccelatation[1] = values[1] - gravity[1];
 		linearAccelatation[2] = values[2] - gravity[2];
 	}
-	/*
-	static void myExtractGravity(float[] values, float[] gravity) {
-		// 加速度から重力の影響を取り除く。以下参照。
-		// http://developer.android.com/intl/ja/reference/android/hardware/SensorEvent.html#values
-		final float alpha = 0.8f;
-
-		gravity[0] = alpha * gravity[0] + (1 - alpha) * values[0];
-		gravity[1] = alpha * gravity[1] + (1 - alpha) * values[1];
-		gravity[2] = alpha * gravity[2] + (1 - alpha) * values[2];
-
-		linearAccelatation[0] = values[0] - gravity[0];
-		linearAccelatation[1] = values[1] - gravity[1];
-		linearAccelatation[2] = values[2] - gravity[2];
-	}
-	*/
 	
 	/*
 	 * Low-pass filter
