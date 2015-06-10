@@ -100,6 +100,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //			Sensor s = sensors.get(0);
 //			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
 //		}
+		
+		Log.d("SLAM","PublishSensorData constructor OK");
 	}
 
 	/*
@@ -131,7 +133,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	 */
 	public void run(){
 
-		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
+		Log.d("SLAM","PublishSensorData run() start");
+		try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
 
 		while(!halt_){
 			try {
@@ -155,7 +158,10 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 					String.valueOf(magnet[2]) + "&" +
 					String.valueOf(gyro[0]) + "&" +
 					String.valueOf(gyro[1]) + "&" +
-					String.valueOf(gyro[2]);
+					String.valueOf(gyro[2]) + "&" +
+					String.valueOf(linear_acceleration[0]) + "&" +
+					String.valueOf(linear_acceleration[1]) + "&" +
+					String.valueOf(linear_acceleration[2]);
 			MCS.publish("SLAM/input/all", data);
 		}
 	}
@@ -198,6 +204,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         	Utils.lowPassFilter(gravity,event.values);
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
+        	Utils.lowPassFilter(linear_acceleration,event.values);
         	if(accelType == 2){
         		Utils.extractGravity(event.values, acceleration_gravity, acceleration);
         	}

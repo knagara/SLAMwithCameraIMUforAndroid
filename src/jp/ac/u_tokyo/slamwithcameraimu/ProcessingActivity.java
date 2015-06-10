@@ -65,7 +65,6 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		//Mqtt connect
 		MCS.connect();
 //		log("Mqtt connecting...");
-		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 	}
 
 	private void initPublishSensorData(){
@@ -73,7 +72,7 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		publishSensorData = new PublishSensorData(getApplicationContext());
 		publishSensorData.setMCS(MCS);
 		publishSensorData.setRate(Integer.parseInt(sp.getString("rate", "20")));
-		publishSensorData.setAccelType(Integer.parseInt(sp.getString("accel_g", "0")));
+		publishSensorData.setAccelType(Integer.parseInt(sp.getString("accel_g", "2")));
 		publishSensorData.start();
 	}
 
@@ -142,5 +141,4 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 	    	break;
 	    }
 	}
-
 }
