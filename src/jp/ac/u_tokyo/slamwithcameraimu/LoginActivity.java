@@ -15,7 +15,7 @@ import android.widget.Toast;
 public class LoginActivity extends Activity implements OnClickListener {
 
 	SharedPreferences sp;
-	EditText server, port, user, pass, clientId, rate, accel_g;
+	EditText server, port, user, pass, clientId, rate, accel_g, alpha;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +37,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 		clientId = (EditText) findViewById(R.id.editText5);
 		rate = (EditText) findViewById(R.id.editText6);
 		accel_g = (EditText) findViewById(R.id.editText7);
+		alpha = (EditText) findViewById(R.id.editText9);
 	}
 
 	@Override
@@ -51,6 +52,7 @@ public class LoginActivity extends Activity implements OnClickListener {
         String clientIdStr = sp.getString("clientId", "");
         String rateStr = sp.getString("rate", "");
         String accel_gStr = sp.getString("accel_g", "");
+        String alphaStr = sp.getString("alpha", "");
 
         //Set data to the form
         server.setText(serverStr);
@@ -60,6 +62,7 @@ public class LoginActivity extends Activity implements OnClickListener {
         clientId.setText(clientIdStr);
         rate.setText(rateStr);
         accel_g.setText(accel_gStr);
+        alpha.setText(alphaStr);
 	}
 
 	@Override
@@ -88,7 +91,8 @@ public class LoginActivity extends Activity implements OnClickListener {
 				|| pass.getText().toString().equals("")
 				|| clientId.getText().toString().equals("")
 				|| rate.getText().toString().equals("")
-				|| accel_g.getText().toString().equals("")) {
+				|| accel_g.getText().toString().equals("")
+				|| alpha.getText().toString().equals("")) {
 
 			Toast.makeText(this, getString(R.string.please_fill),
 					Toast.LENGTH_SHORT).show();
@@ -103,6 +107,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 			edit.putString("clientId", clientId.getText().toString());
 			edit.putString("rate", rate.getText().toString());
 			edit.putString("accel_g", accel_g.getText().toString());
+			edit.putString("alpha", alpha.getText().toString());
 			edit.commit();
 			return true;
 		}

@@ -12,10 +12,10 @@ public class Utils {
 	 *            加速度から重力加速度が取り除かれた値が格納される配列
 	 */
 	static void extractGravity(float[] values, float[] gravity,
-			float[] linearAccelatation) {
+			float[] linearAccelatation, float alpha) {
 		// 加速度から重力の影響を取り除く。以下参照。
 		// http://developer.android.com/intl/ja/reference/android/hardware/SensorEvent.html#values
-		final float alpha = 0.95f;
+		//float alpha = 0.95f;
 
 		gravity[0] = alpha * gravity[0] + (1 - alpha) * values[0];
 		gravity[1] = alpha * gravity[1] + (1 - alpha) * values[1];
@@ -25,7 +25,7 @@ public class Utils {
 		linearAccelatation[1] = values[1] - gravity[1];
 		linearAccelatation[2] = values[2] - gravity[2];
 	}
-	
+
 	/*
 	 * Low-pass filter
 	 */

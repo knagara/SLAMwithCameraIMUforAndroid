@@ -20,6 +20,9 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	//sleep time
 	int sleepTime = 50;
 
+	//alpha of high-pass filter
+	float alpha;
+
 	//acceleration (加速度)
 	int accelType = 0;
 	float[] acceleration_with_gravity = new float[3];
@@ -27,7 +30,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	float[] acceleration_gravity = new float[3]; //計算用の一時変数
 	float[] linear_acceleration = new float[3];
 	float[] linear_acceleration_gravity = new float[3]; //計算用の一時変数
-	
+
 	//gravity (重力)
 	float[] gravity = new float[3];
 
@@ -100,7 +103,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //			Sensor s = sensors.get(0);
 //			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
 //		}
-		
+
 		Log.d("SLAM","PublishSensorData constructor OK");
 	}
 
@@ -123,6 +126,13 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	 */
 	public void setAccelType(int type){
 		this.accelType = type;
+	}
+
+	/*
+	 * Set alpha of High-pass filter
+	 */
+	public void setAlpha(float alpha){
+		this.alpha = alpha;
 	}
 
 	/*
@@ -196,7 +206,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //        		acceleration = event.values.clone();
         		Utils.lowPassFilter(acceleration,event.values);
         	}else if(accelType == 1){
-            	Utils.extractGravity(event.values, acceleration_gravity, acceleration);
+            	Utils.extractGravity(event.values, acceleration_gravity, acceleration, alpha);
         	}
             break;
         case Sensor.TYPE_GRAVITY:
@@ -206,7 +216,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         case Sensor.TYPE_LINEAR_ACCELERATION:
         	Utils.lowPassFilter(linear_acceleration,event.values);
         	if(accelType == 2){
-        		Utils.extractGravity(event.values, acceleration_gravity, acceleration);
+        		Utils.extractGravity(event.values, acceleration_gravity, acceleration, alpha);
         	}
             break;
         case Sensor.TYPE_GYROSCOPE:
