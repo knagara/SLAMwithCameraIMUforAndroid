@@ -14,10 +14,11 @@ public final class R {
         public static final int ic_launcher=0x7f020000;
     }
     public static final class id {
-        public static final int button_login=0x7f060019;
-        public static final int button_start=0x7f06001a;
-        public static final int button_stop=0x7f06001b;
+        public static final int button_login=0x7f06001c;
+        public static final int button_start=0x7f06001d;
+        public static final int button_stop=0x7f06001e;
         public static final int editText1=0x7f060002;
+        public static final int editText10=0x7f06001b;
         public static final int editText2=0x7f060005;
         public static final int editText3=0x7f060008;
         public static final int editText4=0x7f06000b;
@@ -26,6 +27,7 @@ public final class R {
         public static final int editText7=0x7f060014;
         public static final int editText9=0x7f060018;
         public static final int tableRow1=0x7f060000;
+        public static final int tableRow10=0x7f060019;
         public static final int tableRow2=0x7f060003;
         public static final int tableRow3=0x7f060006;
         public static final int tableRow4=0x7f060009;
@@ -34,6 +36,7 @@ public final class R {
         public static final int tableRow7=0x7f060012;
         public static final int tableRow9=0x7f060016;
         public static final int textView1=0x7f060001;
+        public static final int textView10=0x7f06001a;
         public static final int textView2=0x7f060004;
         public static final int textView3=0x7f060007;
         public static final int textView4=0x7f06000a;

@@ -73,7 +73,8 @@ public class ProcessingActivity extends Activity implements OnClickListener {
 		publishSensorData.setMCS(MCS);
 		publishSensorData.setRate(Integer.parseInt(sp.getString("rate", "20")));
 		publishSensorData.setAccelType(Integer.parseInt(sp.getString("accel_g", "2")));
-		publishSensorData.setAlpha(Float.parseFloat(sp.getString("alpha", "0.95")));
+		publishSensorData.setAlpha(Float.parseFloat(sp.getString("alpha", "0.85")));
+		publishSensorData.setAlphaLPF(Float.parseFloat(sp.getString("alpha_LPF", "0.8")));
 		publishSensorData.start();
 	}
 

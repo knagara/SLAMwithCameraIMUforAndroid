@@ -22,6 +22,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 
 	//alpha of high-pass filter
 	float alpha;
+	//alpha of low-pass filter
+	float alpha_LPF;
 
 	//acceleration (加速度)
 	int accelType = 0;
@@ -136,6 +138,13 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	}
 
 	/*
+	 * Set alpha of Low-pass filter
+	 */
+	public void setAlphaLPF(float alpha_LPF){
+		this.alpha_LPF = alpha_LPF;
+	}
+
+	/*
 	 * Main part of this thread
 	 * Publish sensor data via MQTT.
 	 * (非 Javadoc)
@@ -168,10 +177,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 					String.valueOf(magnet[2]) + "&" +
 					String.valueOf(gyro[0]) + "&" +
 					String.valueOf(gyro[1]) + "&" +
-					String.valueOf(gyro[2]) + "&" +
-					String.valueOf(linear_acceleration[0]) + "&" +
-					String.valueOf(linear_acceleration[1]) + "&" +
-					String.valueOf(linear_acceleration[2]);
+					String.valueOf(gyro[2]);
 			MCS.publish("SLAM/input/all", data);
 		}
 	}
@@ -204,28 +210,27 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         case Sensor.TYPE_ACCELEROMETER:
         	if(accelType == 0){
 //        		acceleration = event.values.clone();
-        		Utils.lowPassFilter(acceleration,event.values);
+        		Utils.lowPassFilter(acceleration,event.values,alpha_LPF);
         	}else if(accelType == 1){
             	Utils.extractGravity(event.values, acceleration_gravity, acceleration, alpha);
         	}
             break;
         case Sensor.TYPE_GRAVITY:
 //        	gravity = event.values.clone();
-        	Utils.lowPassFilter(gravity,event.values);
+        	Utils.lowPassFilter(gravity,event.values,alpha_LPF);
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
-        	Utils.lowPassFilter(linear_acceleration,event.values);
         	if(accelType == 2){
         		Utils.extractGravity(event.values, acceleration_gravity, acceleration, alpha);
         	}
             break;
         case Sensor.TYPE_GYROSCOPE:
 //        	gyro = event.values.clone();
-        	Utils.lowPassFilter(gyro,event.values);
+        	Utils.lowPassFilter(gyro,event.values,alpha_LPF);
         	break;
         case Sensor.TYPE_MAGNETIC_FIELD:
 //        	magnet = event.values.clone();
-        	Utils.lowPassFilter(magnet,event.values);
+        	Utils.lowPassFilter(magnet,event.values,alpha_LPF);
         	break;
 //        case Sensor.TYPE_ORIENTATION:
 //        	ori = event.values.clone();

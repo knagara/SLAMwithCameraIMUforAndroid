@@ -15,7 +15,7 @@ public class Utils {
 			float[] linearAccelatation, float alpha) {
 		// 加速度から重力の影響を取り除く。以下参照。
 		// http://developer.android.com/intl/ja/reference/android/hardware/SensorEvent.html#values
-		//float alpha = 0.95f;
+		//float alpha = 0.85f;
 
 		gravity[0] = alpha * gravity[0] + (1 - alpha) * values[0];
 		gravity[1] = alpha * gravity[1] + (1 - alpha) * values[1];
@@ -29,8 +29,8 @@ public class Utils {
 	/*
 	 * Low-pass filter
 	 */
-	static void lowPassFilter(float[] values, float[] newValues){
-		final float alpha = 0.5f;
+	static void lowPassFilter(float[] values, float[] newValues, float alpha){
+		//final float alpha = 0.8f;
 		values[0] = alpha * values[0] + (1 - alpha) * newValues[0];
 		values[1] = alpha * values[1] + (1 - alpha) * newValues[1];
 		values[2] = alpha * values[2] + (1 - alpha) * newValues[2];
