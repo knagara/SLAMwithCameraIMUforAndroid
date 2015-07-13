@@ -112,7 +112,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 			edit.putString("rate", rate.getText().toString());
 			edit.putString("accel_g", accel_g.getText().toString());
 			edit.putString("alpha", alpha.getText().toString());
-			edit.putString("alpha_LPF", alpha.getText().toString());
+			edit.putString("alpha_LPF", alpha_LPF.getText().toString());
 			edit.commit();
 			return true;
 		}
