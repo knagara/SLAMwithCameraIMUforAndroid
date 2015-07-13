@@ -1,5 +1,6 @@
 package jp.ac.u_tokyo.slamwithcameraimu;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
@@ -38,6 +39,11 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 
 	//Gyroscope （ジャイロスコープ）
 	float[] gyro = new float[3];
+    ArrayList<Float> valueX     = new ArrayList<Float>();
+    ArrayList<Float> valueY    = new ArrayList<Float>();
+    ArrayList<Float> valueZ     = new ArrayList<Float>();
+    int sampleCount = 13; //サンプリング数
+    int medianNum = 6; //サンプリングした値の使用値のインデックス
 
 	//Magnetic field （地磁気）
 	float[] magnet = new float[3];
@@ -226,7 +232,17 @@ public class PublishSensorData extends Thread implements SensorEventListener {
             break;
         case Sensor.TYPE_GYROSCOPE:
 //        	gyro = event.values.clone();
-        	Utils.lowPassFilter(gyro,event.values,alpha_LPF);
+//        	Utils.lowPassFilter(gyro,event.values,alpha_LPF);
+        	valueX.add(event.values[0]);
+        	valueY.add(event.values[1]);
+        	valueZ.add(event.values[2]);
+        	//必要なサンプリング数に達したら
+        	if(valueX.size() == sampleCount){
+        		Utils.medianLPFilter(gyro, valueX, valueY, valueZ, medianNum, alpha);
+        		valueX.remove(0);
+        		valueY.remove(0);
+        		valueZ.remove(0);
+        	}
         	break;
         case Sensor.TYPE_MAGNETIC_FIELD:
 //        	magnet = event.values.clone();

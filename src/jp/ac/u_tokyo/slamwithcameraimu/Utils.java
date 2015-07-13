@@ -1,8 +1,11 @@
 package jp.ac.u_tokyo.slamwithcameraimu;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 public class Utils {
 	/**
-	 * 加速度から重力加速度を取り除く。
+	 * 加速度から重力加速度を取り除く．ハイパスフィルタとして機能する．
 	 *
 	 * @param values
 	 *            センサーの加速度
@@ -34,5 +37,23 @@ public class Utils {
 		values[0] = alpha * values[0] + (1 - alpha) * newValues[0];
 		values[1] = alpha * values[1] + (1 - alpha) * newValues[1];
 		values[2] = alpha * values[2] + (1 - alpha) * newValues[2];
+	}
+
+	/*
+	 * Median filter + Low-pass filter
+	 */
+	static void medianLPFilter(float[] values, ArrayList<Float> valueX, ArrayList<Float> valueY, ArrayList<Float> valueZ, int medianNum, float alpha){
+		//X
+		ArrayList<Float> lst = (ArrayList<Float>) valueX.clone();
+		Collections.sort(lst);
+		values[0] = (values[0]*alpha) + lst.get(medianNum)*(1 - alpha);
+		//Y
+		lst = (ArrayList<Float>) valueY.clone();
+		Collections.sort(lst);
+		values[1] = (values[1]*alpha) + lst.get(medianNum)*(1 - alpha);
+		//Z
+		lst = (ArrayList<Float>) valueZ.clone();
+		Collections.sort(lst);
+		values[2] = (values[2]*alpha) + lst.get(medianNum)*(1 - alpha);
 	}
 }
