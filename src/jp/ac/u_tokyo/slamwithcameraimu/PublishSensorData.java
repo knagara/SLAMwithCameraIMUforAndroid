@@ -239,6 +239,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         	//必要なサンプリング数に達したら
         	if(valueX.size() == sampleCount){
         		Utils.medianLPFilter(gyro, valueX, valueY, valueZ, medianNum, alpha);
+        		//Utils.medianLPFilter(gyro, valueX, valueY, valueZ, medianNum, alpha);
         		valueX.remove(0);
         		valueY.remove(0);
         		valueZ.remove(0);

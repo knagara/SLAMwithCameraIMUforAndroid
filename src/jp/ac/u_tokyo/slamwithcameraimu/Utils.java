@@ -40,6 +40,24 @@ public class Utils {
 	}
 
 	/*
+	 * Median filter
+	 */
+	static void medianFilter(float[] values, ArrayList<Float> valueX, ArrayList<Float> valueY, ArrayList<Float> valueZ, int medianNum){
+		//X
+		ArrayList<Float> lst = (ArrayList<Float>) valueX.clone();
+		Collections.sort(lst);
+		values[0] = lst.get(medianNum);
+		//Y
+		lst = (ArrayList<Float>) valueY.clone();
+		Collections.sort(lst);
+		values[1] = lst.get(medianNum);
+		//Z
+		lst = (ArrayList<Float>) valueZ.clone();
+		Collections.sort(lst);
+		values[2] = lst.get(medianNum);
+	}
+
+	/*
 	 * Median filter + Low-pass filter
 	 */
 	static void medianLPFilter(float[] values, ArrayList<Float> valueX, ArrayList<Float> valueY, ArrayList<Float> valueZ, int medianNum, float alpha){
