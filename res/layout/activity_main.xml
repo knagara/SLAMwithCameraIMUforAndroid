@@ -1,24 +1,35 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="${relativePackage}.${activityClass}" >
+    android:orientation="vertical" >
 
-    <Button
-        android:id="@+id/button_login"
-        android:layout_width="200dp"
-        android:layout_height="80dp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="150dp"
-        android:text="Login" />
+	<LinearLayout
+	 android:layout_width="fill_parent"
+	 android:layout_height="wrap_content"
+	 android:layout_weight="1"
+	 android:orientation="horizontal" >
 
-    <Button
-        android:id="@+id/button_start"
-        android:layout_width="200dp"
-        android:layout_height="80dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="250dp"
-        android:text="Start" />
+	    <Button
+	        android:id="@+id/button_login"
+	 android:layout_width="fill_parent"
+	        android:layout_height="80dp"
+	        android:text="Login" />
 
-</RelativeLayout>
+	</LinearLayout>
+
+	 <LinearLayout
+	 android:layout_width="fill_parent"
+	 android:layout_height="wrap_content"
+	 android:orientation="horizontal" >
+
+	    <Button
+	        android:id="@+id/button_start"
+	 		android:layout_width="fill_parent"
+	        android:layout_height="380dp"
+	        android:layout_marginLeft="50dp"
+	        android:layout_marginRight="50dp"
+	        android:text="Start" />
+
+	</LinearLayout>
+</LinearLayout>

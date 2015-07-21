@@ -26,7 +26,9 @@
 	 <Button
 	     android:id="@+id/button_stop"
 	     android:layout_width="wrap_content"
-	     android:layout_height="80dp"
+	     android:layout_height="380dp"
+	        android:layout_marginLeft="50dp"
+	        android:layout_marginRight="50dp"
 	     android:layout_weight="1"
 	     android:text="Stop" />
 
