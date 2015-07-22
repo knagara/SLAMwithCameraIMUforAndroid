@@ -6,5 +6,8 @@
     <string name="please_fill">Please fill in the form</string>
     <string name="success">Success</string>
     <string name="mqtt_not_connected">Mqtt is not connected. Please try again.</string>
+    <color name="black">#000000</color>
+    <color name="darkgray">#333333</color>
+    <color name="white">#FFFFFF</color>
 
 </resources>
