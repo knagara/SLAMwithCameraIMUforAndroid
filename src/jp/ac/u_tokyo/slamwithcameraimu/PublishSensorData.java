@@ -18,8 +18,13 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	MqttClientService MCS;
 	SensorManager mSensorManager;
 
+	boolean isFirst = true;
+
 	//sleep time
 	int sleepTime = 50;
+
+	//time
+	long currentTimeMillis, currentTimeMillis1;
 
 	//alpha of high-pass filter
 	float alpha;
@@ -30,6 +35,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	int accelType = 0;
 	float[] acceleration_with_gravity = new float[3];
 	float[] acceleration = new float[3];
+	float[] acceleration_temp = new float[3];
 	float[] acceleration_gravity = new float[3]; //計算用の一時変数
 	float[] linear_acceleration = new float[3];
 	float[] linear_acceleration_gravity = new float[3]; //計算用の一時変数
@@ -39,11 +45,14 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 
 	//Gyroscope （ジャイロスコープ）
 	float[] gyro = new float[3];
+	float[] gyroFixed = new float[3];
+	float[] gyroFixed1 = new float[3];
+	float[] gyro_diff = new float[3];
     ArrayList<Float> valueX     = new ArrayList<Float>();
     ArrayList<Float> valueY    = new ArrayList<Float>();
     ArrayList<Float> valueZ     = new ArrayList<Float>();
-    int sampleCount = 13; //サンプリング数
-    int medianNum = 6; //サンプリングした値の使用値のインデックス
+    int sampleCount = 9; //サンプリング数
+    int medianNum = 4; //サンプリングした値の使用値のインデックス
 
 	//Magnetic field （地磁気）
 	float[] magnet = new float[3];
@@ -168,10 +177,18 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 				e.printStackTrace();
 			}
 			//Get time in millisecond
-			long currentTimeMillis = System.currentTimeMillis();
-			String time = String.valueOf(currentTimeMillis);
+			if(!isFirst){
+				currentTimeMillis1 = currentTimeMillis;
+			}
+			currentTimeMillis = System.currentTimeMillis();
+			//Gyro offset
+			subtractGyroOffset();
+			if(!isFirst){
+				//Gyro diff
+				calcGyroDiff((float)(currentTimeMillis-currentTimeMillis1)/1000.0f);
+			}
 			String data = null;
-			data = time + "&" +
+			data = String.valueOf(currentTimeMillis) + "&" +
 					String.valueOf(acceleration[0]) + "&" +
 					String.valueOf(acceleration[1]) + "&" +
 					String.valueOf(acceleration[2]) + "&" +
@@ -181,11 +198,46 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 					String.valueOf(magnet[0]) + "&" +
 					String.valueOf(magnet[1]) + "&" +
 					String.valueOf(magnet[2]) + "&" +
-					String.valueOf(gyro[0]) + "&" +
-					String.valueOf(gyro[1]) + "&" +
-					String.valueOf(gyro[2]);
+					String.valueOf(gyroFixed[0]) + "&" +
+					String.valueOf(gyroFixed[1]) + "&" +
+					String.valueOf(gyroFixed[2]) + "&" +
+					String.valueOf(gyro_diff[0]) + "&" +
+					String.valueOf(gyro_diff[1]) + "&" +
+					String.valueOf(gyro_diff[2]);
 			MCS.publish("SLAM/input/all", data);
+
+			setPreviousGyro();
+			if(isFirst){
+				isFirst = false;
+			}
 		}
+	}
+
+	/**
+	 * setPreviousGyro
+	 */
+	private void setPreviousGyro(){
+		gyroFixed1[0] = gyroFixed[0];
+		gyroFixed1[1] = gyroFixed[1];
+		gyroFixed1[2] = gyroFixed[2];
+	}
+
+	/**
+	 * subtractGyroOffset
+	 */
+	private void subtractGyroOffset(){
+		gyroFixed[0] = gyro[0] + 0.017453283f;
+		gyroFixed[1] = gyro[1];
+		gyroFixed[2] = gyro[2] - 0.017453283f;
+	}
+
+	/**
+	 * calcGyroDiff
+	 */
+	private void calcGyroDiff(float t){
+		gyro_diff[0] = Utils.lowPassFilterSingle(gyro_diff[0], (gyroFixed[0]-gyroFixed1[0])/t, alpha_LPF);
+		gyro_diff[1] = Utils.lowPassFilterSingle(gyro_diff[1], (gyroFixed[1]-gyroFixed1[1])/t, alpha_LPF);
+		gyro_diff[2] = Utils.lowPassFilterSingle(gyro_diff[2], (gyroFixed[2]-gyroFixed1[2])/t, alpha_LPF);
 	}
 
 	/*
@@ -218,7 +270,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //        		acceleration = event.values.clone();
         		Utils.lowPassFilter(acceleration,event.values,alpha_LPF);
         	}else if(accelType == 1){
-            	Utils.extractGravity(event.values, acceleration_gravity, acceleration, alpha);
+            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
+            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha);
         	}
             break;
         case Sensor.TYPE_GRAVITY:
@@ -227,7 +280,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
         	if(accelType == 2){
-        		Utils.extractGravity(event.values, acceleration_gravity, acceleration, alpha);
+        		Utils.highPassFilter(event.values, acceleration_gravity, acceleration, alpha);
         	}
             break;
         case Sensor.TYPE_GYROSCOPE:
