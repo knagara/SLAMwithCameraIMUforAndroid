@@ -37,8 +37,6 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	float[] acceleration = new float[3];
 	float[] acceleration_temp = new float[3];
 	float[] acceleration_gravity = new float[3]; //計算用の一時変数
-	float[] linear_acceleration = new float[3];
-	float[] linear_acceleration_gravity = new float[3]; //計算用の一時変数
 
 	//gravity (重力)
 	float[] gravity = new float[3];
@@ -60,11 +58,6 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	//Orientation (傾き)
 	float[] ori = new float[3];
 	float[] orientation = new float[3];
-	//Rotation matrix
-	private static final int MATRIX_SIZE = 16;
-	float[] inR = new float[MATRIX_SIZE];
-	float[] outR = new float[MATRIX_SIZE];
-	float[] I = new float[MATRIX_SIZE];
 
 	/*
 	 * Constructor
@@ -271,7 +264,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         		Utils.lowPassFilter(acceleration,event.values,alpha_LPF);
         	}else if(accelType == 1){
             	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
-            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha);
+            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha_LPF);
         	}
             break;
         case Sensor.TYPE_GRAVITY:
@@ -280,7 +273,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
         	if(accelType == 2){
-        		Utils.highPassFilter(event.values, acceleration_gravity, acceleration, alpha);
+            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
+            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha_LPF);
         	}
             break;
         case Sensor.TYPE_GYROSCOPE:
@@ -291,7 +285,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         	valueZ.add(event.values[2]);
         	//必要なサンプリング数に達したら
         	if(valueX.size() == sampleCount){
-        		Utils.medianLPFilter(gyro, valueX, valueY, valueZ, medianNum, alpha);
+        		Utils.medianFilter(gyro, valueX, valueY, valueZ, medianNum);
         		//Utils.medianLPFilter(gyro, valueX, valueY, valueZ, medianNum, alpha);
         		valueX.remove(0);
         		valueY.remove(0);
