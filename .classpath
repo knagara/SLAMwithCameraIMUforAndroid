@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="libs/org.eclipse.paho.client.mqttv3-1.0.2.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="lib" path="/OpenCV Library - 2.4.11/bin/opencv library - 2.4.11.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
