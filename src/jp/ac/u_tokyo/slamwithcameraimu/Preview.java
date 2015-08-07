@@ -19,6 +19,7 @@ import org.opencv.highgui.Highgui;
 import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -43,21 +44,23 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	Camera mCamera;
 	private boolean mProgressFlag = false;
 
-	int count = 0;
+	int count = 0, frame = 0, prevFrame = -1;
 	boolean isFirst = true;
 
 	String path = "";
 	SimpleDateFormat dateFormat;
 	Size prevSize;
 	private Mat mGray;
-	private Mat mGray90;
 	private FeatureDetector detector;
 	private DescriptorExtractor extractor;
+
 	Mat image01, image02;
-	Mat image01KP, image02KP;
-	Mat grayImage01, grayImage02;
+//	Mat image01KP, image02KP;
 	MatOfKeyPoint keyPoint01, keyPoint02;
 	Mat descripters01, descripters02;
+	MatOfDMatch matchs;
+	DescriptorMatcher matcher;
+	Mat matchedImage;
 
 
 	Preview(Context context) {
@@ -84,7 +87,15 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	public void initOpenCV(){
 		//Mat
 		mGray = new Mat(prevSize.height, prevSize.width, CvType.CV_8U); // プレビューサイズ分のMatを用意
-		mGray90 = new Mat(prevSize.width, prevSize.height, CvType.CV_8U); // 今回はポートレイト＋フロントカメラを使ったので画像を回転させたりするためのバッファ
+		image02 = new Mat(prevSize.width, prevSize.height, CvType.CV_8U); // 今回はポートレイト＋フロントカメラを使ったので画像を回転させたりするためのバッファ
+		image01 = image02;
+		descripters02 = new Mat(image02.rows(), image02.cols(),image02.type());
+		descripters01 = descripters02;
+		keyPoint02 = new MatOfKeyPoint();
+		keyPoint01 = new MatOfKeyPoint();
+		matchs = new MatOfDMatch();
+		matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE);
+		matchedImage = new Mat(image02.rows(),image02.cols() * 2, image02.type());
 
 		//Features2d
 		detector = FeatureDetector
@@ -110,80 +121,33 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 //			count++;
 //			Log.d(TAG, "count = " + count);
-//			if (count >= 50) {
+//			if (count >= 10) {
 //				count = 0;
 //				mCamera.stopPreview();
 
-				Log.d(TAG, "captured");
-//				Toast.makeText(mContext, "captured", Toast.LENGTH_SHORT).show();
-				new QuickToastTask(mContext, "captured", 20).execute();
+//				Log.d(TAG, "onPreviewFrame");
 
 				if(isFirst){
+					isFirst = false;
 					initOpenCV();
 				}
 
-				mGray.put(0, 0, data); // プレビュー画像NV21のYデータをコピーすればグレースケール画像になる
-				Core.flip(mGray.t(), mGray90, 0); // ポートレイト＋フロントなので回転
-				Core.flip(mGray90, mGray90, -1);
+				if(prevFrame != frame){
+					prevFrame = frame;
 
-				image02 = mGray90;
-				image02KP = mGray90;
-				grayImage02 = mGray90;
+					new QuickToastTask(mContext, "captured", 20).execute();
 
-				keyPoint02 = new MatOfKeyPoint();
-				detector.detect(grayImage02, keyPoint02);
+					mGray.put(0, 0, data); // プレビュー画像NV21のYデータをコピーすればグレースケール画像になる
+					Core.flip(mGray.t(), image02, 0); // ポートレイト＋フロントなので回転
+					Core.flip(image02, image02, -1);
 
-				descripters02 = new Mat(image02.rows(), image02.cols(),
-						image02.type());
-				extractor.compute(grayImage02, keyPoint02, descripters02);
-
-				Features2d.drawKeypoints(image02, keyPoint02, image02KP);
-
-				// 画像を保存
-//				path = Environment.getExternalStorageDirectory()
-//						.getPath()
-//						+ "/DCIM/SLAMwithCameraIMU/"
-//						+ dateFormat.format(new Date()) + "_KP.jpg";
-//				Highgui.imwrite(path, image02KP);
-
-
-				if (!isFirst) {
-					MatOfDMatch matchs = new MatOfDMatch();
-					DescriptorMatcher matcher = DescriptorMatcher
-							.create(DescriptorMatcher.BRUTEFORCE);
-					matcher.match(descripters01, descripters02, matchs);
-
-//					// 上位50点以外の点を除去する
-//					int N = 50;
-//					DMatch[] tmp01 = matchs.toArray();
-//					DMatch[] tmp02 = new DMatch[N];
-//					for (int i = 0; i < tmp02.length; i++) {
-//						tmp02[i] = tmp01[i];
-//					}
-//					matchs.fromArray(tmp02);
-
-					Mat matchedImage = new Mat(image01.rows(),
-							image01.cols() * 2, image01.type());
-					Features2d.drawMatches(image01, keyPoint01, image02,
-							keyPoint02, matchs, matchedImage);
-
-					// 画像を保存
-					path = Environment.getExternalStorageDirectory().getPath()
-							+ "/DCIM/SLAMwithCameraIMU/"
-							+ dateFormat.format(new Date()) + "_Match.jpg";
-					Highgui.imwrite(path, matchedImage);
+					new FeatureDetectTask().execute(image02);
 				}
-
-				image01 = image02;
-				keyPoint01 = keyPoint02;
-				descripters01 = descripters02;
-
-				isFirst = false;
 
 //				mCamera.setPreviewCallback(editPreviewImage);
 //				mCamera.startPreview();
-//			}
-		}
+			}
+//		}
 	};
 
 	public void setCamera(Camera camera) {
@@ -334,6 +298,66 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 			}
 		}
 		return optimalSize;
+	}
+
+	public class FeatureDetectTask extends AsyncTask<Mat, Integer, Mat> {
+
+		public FeatureDetectTask() {
+			super();
+		}
+
+	    protected Mat doInBackground(Mat... mat) {
+
+	    	image02 = mat[0].clone();
+			detector.detect(image02, keyPoint02);
+			extractor.compute(image02, keyPoint02, descripters02);
+
+//			Features2d.drawKeypoints(image02, keyPoint02, image02KP);
+
+			// 画像を保存
+//			path = Environment.getExternalStorageDirectory()
+//					.getPath()
+//					+ "/DCIM/SLAMwithCameraIMU/"
+//					+ dateFormat.format(new Date()) + "_KP.jpg";
+//			Highgui.imwrite(path, image02);
+
+			if (frame > 0) {
+				matcher.match(descripters01, descripters02, matchs);
+
+//				// 上位50点以外の点を除去する
+//				int N = 50;
+//				DMatch[] tmp01 = matchs.toArray();
+//				DMatch[] tmp02 = new DMatch[N];
+//				for (int i = 0; i < tmp02.length; i++) {
+//					tmp02[i] = tmp01[i];
+//				}
+//				matchs.fromArray(tmp02);
+
+				Features2d.drawMatches(image01, keyPoint01, image02,
+						keyPoint02, matchs, matchedImage);
+
+				// 画像を保存
+				path = Environment.getExternalStorageDirectory().getPath()
+						+ "/DCIM/SLAMwithCameraIMU/"
+						+ dateFormat.format(new Date()) + "_Match.jpg";
+				Highgui.imwrite(path, matchedImage);
+			}
+
+			return image02;
+	    }
+
+	    @Override
+	    protected void onPostExecute(Mat mat) {
+
+	    	Log.d(TAG,"task finished. frame = "+frame);
+
+			image01 = mat.clone();
+			keyPoint02.copyTo(keyPoint01);
+			descripters01 = descripters02.clone();
+
+//			isFirst = false;
+			frame++;
+	    }
 	}
 
 }

@@ -142,6 +142,8 @@ public class ProcessingActivity extends Activity {
 		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_6, this,
 				mLoaderCallback);
 
+		try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
+
 		// Open the default i.e. the first rear facing camera.
 		mCamera = Camera.open();
 		cameraCurrentlyLocked = defaultCameraId;
