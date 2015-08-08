@@ -59,34 +59,6 @@ public class ProcessingActivity extends Activity {
 //		//TextView
 //		text = (TextView) findViewById(R.id.textView1);
 
-		// Hide the window title.
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-		// Create a RelativeLayout container that will hold a SurfaceView,
-		// and set it as the content of our activity.
-		mPreview = new Preview(this);
-		setContentView(mPreview);
-
-		// Find the total number of cameras available
-		numberOfCameras = Camera.getNumberOfCameras();
-
-		// Find the ID of the default camera
-		CameraInfo cameraInfo = new CameraInfo();
-		for (int i = 0; i < numberOfCameras; i++) {
-			Camera.getCameraInfo(i, cameraInfo);
-			if (cameraInfo.facing == CameraInfo.CAMERA_FACING_BACK) {
-				defaultCameraId = i;
-			}
-		}
-
-		//Screen size
-		WindowManager wm = (WindowManager)getSystemService(WINDOW_SERVICE);
-		// ディスプレイのインスタンス生成
-		Display disp = wm.getDefaultDisplay();
-		sw = disp.getWidth();
-		sh = disp.getHeight();
-
 		//Init
 		init();
 	}
@@ -94,6 +66,7 @@ public class ProcessingActivity extends Activity {
 	private void init(){
 		initMCS();
 		initPublishSensorData();
+		initCamera();
 	}
 
 	private void initMCS(){
@@ -122,6 +95,37 @@ public class ProcessingActivity extends Activity {
 		publishSensorData.setAlpha(Float.parseFloat(sp.getString("alpha", "0.85")));
 		publishSensorData.setAlphaLPF(Float.parseFloat(sp.getString("alpha_LPF", "0.8")));
 		publishSensorData.start();
+	}
+
+	private void initCamera(){
+
+		// Hide the window title.
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+		// Create a RelativeLayout container that will hold a SurfaceView,
+		// and set it as the content of our activity.
+		mPreview = new Preview(this,MCS);
+		setContentView(mPreview);
+
+		// Find the total number of cameras available
+		numberOfCameras = Camera.getNumberOfCameras();
+
+		// Find the ID of the default camera
+		CameraInfo cameraInfo = new CameraInfo();
+		for (int i = 0; i < numberOfCameras; i++) {
+			Camera.getCameraInfo(i, cameraInfo);
+			if (cameraInfo.facing == CameraInfo.CAMERA_FACING_BACK) {
+				defaultCameraId = i;
+			}
+		}
+
+		//Screen size
+		WindowManager wm = (WindowManager)getSystemService(WINDOW_SERVICE);
+		// ディスプレイのインスタンス生成
+		Display disp = wm.getDefaultDisplay();
+		sw = disp.getWidth();
+		sh = disp.getHeight();
 	}
 
 	private void log(String str){

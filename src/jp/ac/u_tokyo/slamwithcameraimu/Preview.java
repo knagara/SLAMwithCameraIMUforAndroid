@@ -2,7 +2,6 @@ package jp.ac.u_tokyo.slamwithcameraimu;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import org.opencv.core.Core;
@@ -13,8 +12,6 @@ import org.opencv.core.MatOfKeyPoint;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
-import org.opencv.features2d.Features2d;
-import org.opencv.highgui.Highgui;
 
 import android.content.Context;
 import android.hardware.Camera;
@@ -35,6 +32,8 @@ import android.view.ViewGroup;
  */
 class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	private final String TAG = "SLAM";
+
+	MqttClientService MCS;
 
 	Context mContext;
 	SurfaceView mSurfaceView;
@@ -63,9 +62,10 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	Mat matchedImage;
 
 
-	Preview(Context context) {
+	Preview(Context context, MqttClientService MCS) {
 		super(context);
 
+		this.MCS = MCS;
 		mContext = context;
 
 		mSurfaceView = new SurfaceView(context);
@@ -99,9 +99,15 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 		//Features2d
 		detector = FeatureDetector
-				.create(FeatureDetector.ORB);
+				.create(FeatureDetector.FAST);
 		extractor = DescriptorExtractor
-				.create(DescriptorExtractor.ORB);
+				.create(DescriptorExtractor.BRISK);
+
+		//write conf of detector
+//		path = Environment.getExternalStorageDirectory()
+//				.getPath()
+//				+ "/DCIM/SLAMwithCameraIMU/file/detector.txt";
+//		detector.write(path);
 
 		//read conf of detector
 		path = Environment.getExternalStorageDirectory()
@@ -109,10 +115,11 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				+ "/DCIM/SLAMwithCameraIMU/conf/detector.txt";
 		detector.read(path);
 
-		path = Environment.getExternalStorageDirectory()
-				.getPath()
-				+ "/DCIM/SLAMwithCameraIMU/conf/extractor.txt";
-		extractor.read(path);
+//		//read conf of extractor
+//		path = Environment.getExternalStorageDirectory()
+//				.getPath()
+//				+ "/DCIM/SLAMwithCameraIMU/conf/extractor.txt";
+//		extractor.read(path);
 	}
 
 	private final Camera.PreviewCallback editPreviewImage = new Camera.PreviewCallback() {
@@ -135,7 +142,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				if(prevFrame != frame){
 					prevFrame = frame;
 
-					new QuickToastTask(mContext, "captured", 20).execute();
+					new QuickToastTask(mContext, "captured", 10).execute();
 
 					mGray.put(0, 0, data); // プレビュー画像NV21のYデータをコピーすればグレースケール画像になる
 					Core.flip(mGray.t(), image02, 0); // ポートレイト＋フロントなので回転
@@ -309,8 +316,15 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	    protected Mat doInBackground(Mat... mat) {
 
 	    	image02 = mat[0].clone();
+
+//	    	long start = System.nanoTime();
 			detector.detect(image02, keyPoint02);
+//			long end = System.nanoTime();
+//			Log.d(TAG,"Feature detect Time (ms):" + (end - start) / 1000000f);
+//	    	long start2 = System.nanoTime();
 			extractor.compute(image02, keyPoint02, descripters02);
+//			long end2 = System.nanoTime();
+//			Log.d(TAG,"Feature descript Time (ms):" + (end2 - start2) / 1000000f);
 
 //			Features2d.drawKeypoints(image02, keyPoint02, image02KP);
 
@@ -322,26 +336,31 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //			Highgui.imwrite(path, image02);
 
 			if (frame > 0) {
+//		    	long start3 = System.nanoTime();
 				matcher.match(descripters01, descripters02, matchs);
+//				long end3 = System.nanoTime();
+//				Log.d(TAG,"Feature match Time (ms):" + (end3 - start3) / 1000000f);
 
-//				// 上位50点以外の点を除去する
-//				int N = 50;
-//				DMatch[] tmp01 = matchs.toArray();
-//				DMatch[] tmp02 = new DMatch[N];
-//				for (int i = 0; i < tmp02.length; i++) {
-//					tmp02[i] = tmp01[i];
-//				}
-//				matchs.fromArray(tmp02);
+//				Features2d.drawMatches(image01, keyPoint01, image02,
+//						keyPoint02, matchs, matchedImage);
+//
+//				// 画像を保存
+//				path = Environment.getExternalStorageDirectory().getPath()
+//						+ "/DCIM/SLAMwithCameraIMU/"
+//						+ dateFormat.format(new Date()) + "_Match.jpg";
+//				Highgui.imwrite(path, matchedImage);
 
-				Features2d.drawMatches(image01, keyPoint01, image02,
-						keyPoint02, matchs, matchedImage);
+				//Matをバイナリに変換
+				byte buff[] = new byte[(int) (descripters02.total() * descripters02.channels())];
+				descripters02.get(0, 0, buff);
+//				byte buff2[] = new byte[(int) (keyPoint02.total() * keyPoint02.channels())];
+//				keyPoint02.get(0, 0, buff2);
+				//MQTT Publish
+				MCS.publishBinary("SLAM/input/camera", buff);
+//				MCS.publishBinary("SLAM/input/camera", buff2);
 
-				// 画像を保存
-				path = Environment.getExternalStorageDirectory().getPath()
-						+ "/DCIM/SLAMwithCameraIMU/"
-						+ dateFormat.format(new Date()) + "_Match.jpg";
-				Highgui.imwrite(path, matchedImage);
 			}
+
 
 			return image02;
 	    }
@@ -349,7 +368,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	    @Override
 	    protected void onPostExecute(Mat mat) {
 
-	    	Log.d(TAG,"task finished. frame = "+frame);
+//	    	Log.d(TAG,"task finished. frame = "+frame);
 
 			image01 = mat.clone();
 			keyPoint02.copyTo(keyPoint01);

@@ -161,7 +161,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	public void run(){
 
 		Log.d("SLAM","PublishSensorData run() start");
-		try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
+		try { Thread.sleep(2500); } catch (InterruptedException e) { e.printStackTrace(); }
 
 		while(!halt_){
 			try {

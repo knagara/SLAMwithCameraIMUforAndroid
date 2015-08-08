@@ -123,6 +123,26 @@ public class MqttClientService implements MqttCallback {
 			}
 		}
 	}
+	public void publishBinary(String topic, byte[] message) {
+		//publish by default qos and retain
+		this.publishBinary(topic,message,this.qos,this.retain);
+	}
+	public void publishBinary(String topic, byte[] message, int qos, boolean retained) {
+		if (!client.isConnected()){
+			Log.d("MQTT","MQTT not connected.");
+			return;
+		}else{
+			MqttMessage mqttmessage = new MqttMessage(message);
+			try {
+				//publish
+				client.publish(topic, mqttmessage);
+			} catch (MqttPersistenceException e) {
+				e.printStackTrace();
+			} catch (MqttException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	/**
 	 * Subscribes to a topic and blocks until Enter is pressed
