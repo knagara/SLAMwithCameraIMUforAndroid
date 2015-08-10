@@ -62,7 +62,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //	Mat image01KP, image02KP;
 	MatOfKeyPoint keyPoint01, keyPoint02;
 	Mat descripters01, descripters02;
-	MatOfDMatch matchs;
+	MatOfDMatch matches, matches_reverse;
 	DescriptorMatcher matcher;
 	Mat matchedImage;
 
@@ -101,13 +101,14 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 		descripters01 = descripters02;
 		keyPoint02 = new MatOfKeyPoint();
 		keyPoint01 = new MatOfKeyPoint();
-		matchs = new MatOfDMatch();
+		matches = new MatOfDMatch();
+		matches_reverse = new MatOfDMatch();
 		matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
 		matchedImage = new Mat(image02.rows(),image02.cols() * 2, image02.type());
 
 		//Features2d
 		detector = FeatureDetector
-				.create(FeatureDetector.ORB);
+				.create(FeatureDetector.FAST);
 		extractor = DescriptorExtractor
 				.create(DescriptorExtractor.BRISK);
 
@@ -325,14 +326,13 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 	    	image02 = mat[0].clone();
 
+	    	//処理時間計測
 //	    	long start = System.nanoTime();
-			detector.detect(image02, keyPoint02);
 //			long end = System.nanoTime();
 //			Log.d(TAG,"Feature detect Time (ms):" + (end - start) / 1000000f);
-//	    	long start2 = System.nanoTime();
+
+			detector.detect(image02, keyPoint02);
 			extractor.compute(image02, keyPoint02, descripters02);
-//			long end2 = System.nanoTime();
-//			Log.d(TAG,"Feature descript Time (ms):" + (end2 - start2) / 1000000f);
 
 //			Features2d.drawKeypoints(image02, keyPoint02, image02KP);
 
@@ -344,23 +344,27 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //			Highgui.imwrite(path, image02);
 
 			if (frame > 0) {
-//		    	long start3 = System.nanoTime();
-				matcher.match(descripters01, descripters02, matchs);
-//				long end3 = System.nanoTime();
-//				Log.d(TAG,"Feature match Time (ms):" + (end3 - start3) / 1000000f);
+				matcher.match(descripters01, descripters02, matches);
+				matcher.match(descripters02, descripters01, matches_reverse);
 
-				// しきい値以上のdistanceを持つマッチングを除去
-				DMatch[] matchArray = matchs.toArray();
+				// マッチングのフィルタリング
+				// (1) クロスチェック
+				// (2) しきい値以上のdistanceを持つマッチングを除去
+				DMatch[] match12 = matches.toArray();
+				DMatch[] match21 = matches_reverse.toArray();
 				ArrayList<DMatch> listMatch = new ArrayList<DMatch>();
-				for (int i = 0; i < matchArray.length; i++) {
-					if(matchArray[i].distance < thresholdOfDistance){
-						listMatch.add(matchArray[i]);
+				for (int i = 0; i < match12.length; i++) {
+					DMatch forward = match12[i];
+					DMatch backward = match21[forward.trainIdx];
+					if (backward.trainIdx == forward.queryIdx &&
+							forward.distance < thresholdOfDistance){
+						listMatch.add(forward);
 					}
 				}
-				matchs.fromList(listMatch);
+				matches.fromList(listMatch);
 
 				Features2d.drawMatches(image01, keyPoint01, image02,
-						keyPoint02, matchs, matchedImage);
+						keyPoint02, matches, matchedImage);
 
 				// 画像を保存
 				path = Environment.getExternalStorageDirectory().getPath()
@@ -379,7 +383,6 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 //				Log.d(TAG,""+descripters02.total());
 
-
 				Log.d(TAG,"key01 "+keyPoint01);
 				for (int i = 0; i < keyPoint01.rows(); i++) {
 					for (int j = 0; j < keyPoint01.cols(); j++) {
@@ -388,16 +391,16 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 					}
 				}
 				Log.d(TAG,"des01 "+descripters01);
-				Log.d(TAG,"match "+matchs);
-				for (int i = 0; i < matchs.rows(); i++) {
-					for (int j = 0; j < matchs.cols(); j++) {
-						double[] num = matchs.get(i, j);
+				Log.d(TAG,"match "+matches);
+				for (int i = 0; i < matches.rows(); i++) {
+					for (int j = 0; j < matches.cols(); j++) {
+						double[] num = matches.get(i, j);
 						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+"," + num[1]+"," + num[2]+"," + num[3]);
 
 					}
 				}
-				List<DMatch> matchesList = matchs.toList();
-				for (int i = 0; i < matchs.rows(); i++) {
+				List<DMatch> matchesList = matches.toList();
+				for (int i = 0; i < matches.rows(); i++) {
 					Log.d(TAG,""+matchesList.get(i).distance);
 				}
 				Log.d(TAG,"key02 "+keyPoint02);
@@ -410,7 +413,6 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				Log.d(TAG,"des02 "+descripters02);
 
 			}
-
 
 			return image02;
 	    }
