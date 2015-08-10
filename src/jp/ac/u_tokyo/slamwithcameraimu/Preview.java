@@ -2,6 +2,8 @@ package jp.ac.u_tokyo.slamwithcameraimu;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.opencv.core.Core;
@@ -9,9 +11,12 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
+import org.opencv.features2d.DMatch;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
+import org.opencv.highgui.Highgui;
 
 import android.content.Context;
 import android.hardware.Camera;
@@ -61,6 +66,9 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	DescriptorMatcher matcher;
 	Mat matchedImage;
 
+	// マッチングのdistanceしきい値
+	public float thresholdOfDistance = 100.0f;
+
 
 	Preview(Context context, MqttClientService MCS) {
 		super(context);
@@ -94,12 +102,12 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 		keyPoint02 = new MatOfKeyPoint();
 		keyPoint01 = new MatOfKeyPoint();
 		matchs = new MatOfDMatch();
-		matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE);
+		matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
 		matchedImage = new Mat(image02.rows(),image02.cols() * 2, image02.type());
 
 		//Features2d
 		detector = FeatureDetector
-				.create(FeatureDetector.FAST);
+				.create(FeatureDetector.ORB);
 		extractor = DescriptorExtractor
 				.create(DescriptorExtractor.BRISK);
 
@@ -341,23 +349,65 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //				long end3 = System.nanoTime();
 //				Log.d(TAG,"Feature match Time (ms):" + (end3 - start3) / 1000000f);
 
-//				Features2d.drawMatches(image01, keyPoint01, image02,
-//						keyPoint02, matchs, matchedImage);
-//
-//				// 画像を保存
-//				path = Environment.getExternalStorageDirectory().getPath()
-//						+ "/DCIM/SLAMwithCameraIMU/"
-//						+ dateFormat.format(new Date()) + "_Match.jpg";
-//				Highgui.imwrite(path, matchedImage);
+				// しきい値以上のdistanceを持つマッチングを除去
+				DMatch[] matchArray = matchs.toArray();
+				ArrayList<DMatch> listMatch = new ArrayList<DMatch>();
+				for (int i = 0; i < matchArray.length; i++) {
+					if(matchArray[i].distance < thresholdOfDistance){
+						listMatch.add(matchArray[i]);
+					}
+				}
+				matchs.fromList(listMatch);
+
+				Features2d.drawMatches(image01, keyPoint01, image02,
+						keyPoint02, matchs, matchedImage);
+
+				// 画像を保存
+				path = Environment.getExternalStorageDirectory().getPath()
+						+ "/DCIM/SLAMwithCameraIMU/"
+						+ dateFormat.format(new Date()) + "_Match.jpg";
+				Highgui.imwrite(path, matchedImage);
 
 				//Matをバイナリに変換
 				byte buff[] = new byte[(int) (descripters02.total() * descripters02.channels())];
 				descripters02.get(0, 0, buff);
-//				byte buff2[] = new byte[(int) (keyPoint02.total() * keyPoint02.channels())];
+//				float buff2[] = new float[(int) (keyPoint02.total() * keyPoint02.channels())];
 //				keyPoint02.get(0, 0, buff2);
 				//MQTT Publish
 				MCS.publishBinary("SLAM/input/camera", buff);
 //				MCS.publishBinary("SLAM/input/camera", buff2);
+
+//				Log.d(TAG,""+descripters02.total());
+
+
+				Log.d(TAG,"key01 "+keyPoint01);
+				for (int i = 0; i < keyPoint01.rows(); i++) {
+					for (int j = 0; j < keyPoint01.cols(); j++) {
+						double[] num = keyPoint01.get(i, j);
+						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
+					}
+				}
+				Log.d(TAG,"des01 "+descripters01);
+				Log.d(TAG,"match "+matchs);
+				for (int i = 0; i < matchs.rows(); i++) {
+					for (int j = 0; j < matchs.cols(); j++) {
+						double[] num = matchs.get(i, j);
+						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+"," + num[1]+"," + num[2]+"," + num[3]);
+
+					}
+				}
+				List<DMatch> matchesList = matchs.toList();
+				for (int i = 0; i < matchs.rows(); i++) {
+					Log.d(TAG,""+matchesList.get(i).distance);
+				}
+				Log.d(TAG,"key02 "+keyPoint02);
+				for (int i = 0; i < keyPoint02.rows(); i++) {
+					for (int j = 0; j < keyPoint02.cols(); j++) {
+						double[] num = keyPoint02.get(i, j);
+						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
+					}
+				}
+				Log.d(TAG,"des02 "+descripters02);
 
 			}
 
