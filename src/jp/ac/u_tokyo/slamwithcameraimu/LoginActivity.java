@@ -15,7 +15,7 @@ import android.widget.Toast;
 public class LoginActivity extends Activity implements OnClickListener {
 
 	SharedPreferences sp;
-	EditText server, port, user, pass, clientId, rate, accel_g, alpha, alpha_LPF;
+	EditText server, port, user, pass, clientId, rate, accel_g, alpha, alpha_LPF, detector, threshold;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +39,8 @@ public class LoginActivity extends Activity implements OnClickListener {
 		accel_g = (EditText) findViewById(R.id.editText7);
 		alpha = (EditText) findViewById(R.id.editText9);
 		alpha_LPF = (EditText) findViewById(R.id.editText10);
+		detector = (EditText) findViewById(R.id.editText11);
+		threshold = (EditText) findViewById(R.id.editText12);
 	}
 
 	@Override
@@ -55,6 +57,8 @@ public class LoginActivity extends Activity implements OnClickListener {
         String accel_gStr = sp.getString("accel_g", "");
         String alphaStr = sp.getString("alpha", "");
         String alpha_LPFStr = sp.getString("alpha_LPF", "");
+        String detectorStr = sp.getString("detector", "");
+        String thresholdStr = sp.getString("threshold", "");
 
         //Set data to the form
         server.setText(serverStr);
@@ -66,6 +70,8 @@ public class LoginActivity extends Activity implements OnClickListener {
         accel_g.setText(accel_gStr);
         alpha.setText(alphaStr);
         alpha_LPF.setText(alpha_LPFStr);
+        detector.setText(detectorStr);
+        threshold.setText(thresholdStr);
 	}
 
 	@Override
@@ -96,7 +102,9 @@ public class LoginActivity extends Activity implements OnClickListener {
 				|| rate.getText().toString().equals("")
 				|| accel_g.getText().toString().equals("")
 				|| alpha.getText().toString().equals("")
-				|| alpha_LPF.getText().toString().equals("")) {
+				|| alpha_LPF.getText().toString().equals("")
+				|| detector.getText().toString().equals("")
+				|| threshold.getText().toString().equals("")) {
 
 			Toast.makeText(this, getString(R.string.please_fill),
 					Toast.LENGTH_SHORT).show();
@@ -113,6 +121,8 @@ public class LoginActivity extends Activity implements OnClickListener {
 			edit.putString("accel_g", accel_g.getText().toString());
 			edit.putString("alpha", alpha.getText().toString());
 			edit.putString("alpha_LPF", alpha_LPF.getText().toString());
+			edit.putString("detector", detector.getText().toString());
+			edit.putString("threshold", threshold.getText().toString());
 			edit.commit();
 			return true;
 		}

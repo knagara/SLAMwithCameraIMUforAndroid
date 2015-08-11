@@ -39,6 +39,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	private final String TAG = "SLAM";
 
 	MqttClientService MCS;
+	String detectorStr;
+	float threshold;
 
 	Context mContext;
 	SurfaceView mSurfaceView;
@@ -66,9 +68,6 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	DescriptorMatcher matcher;
 	Mat matchedImage;
 
-	// マッチングのdistanceしきい値
-	public float thresholdOfDistance = 100.0f;
-
 
 	Preview(Context context, MqttClientService MCS) {
 		super(context);
@@ -88,12 +87,20 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 		dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS");
 	}
 
+	public void setDetector(String detector_){
+		detectorStr = detector_;
+	}
+
+	public void setThreshold(int threshold_){
+		threshold = (float)threshold_;
+	}
+
 	public SurfaceHolder getHolder(){
 		return mHolder;
 	}
 
 	public void initOpenCV(){
-		//Mat
+		// Mat
 		mGray = new Mat(prevSize.height, prevSize.width, CvType.CV_8U); // プレビューサイズ分のMatを用意
 		image02 = new Mat(prevSize.width, prevSize.height, CvType.CV_8U); // 今回はポートレイト＋フロントカメラを使ったので画像を回転させたりするためのバッファ
 		image01 = image02;
@@ -106,25 +113,39 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 		matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
 		matchedImage = new Mat(image02.rows(),image02.cols() * 2, image02.type());
 
-		//Features2d
-		detector = FeatureDetector
-				.create(FeatureDetector.FAST);
-		extractor = DescriptorExtractor
-				.create(DescriptorExtractor.BRISK);
+		// Features2d detector
+		if(detectorStr.equals("FAST")){
+			detector = FeatureDetector.create(FeatureDetector.FAST);
+		}else if(detectorStr.equals("ORB")){
+			detector = FeatureDetector.create(FeatureDetector.ORB);
+		}else if(detectorStr.equals("BRISK")){
+			detector = FeatureDetector.create(FeatureDetector.BRISK);
+		}else{
+			throw new IllegalArgumentException("Error: Please set the type of feature detector!");
+		}
 
-		//write conf of detector
+		// Features2d extractor
+		extractor = DescriptorExtractor.create(DescriptorExtractor.BRISK);
+
+		// read conf of detector
+		if(detectorStr.equals("FAST")){
+			path = Environment.getExternalStorageDirectory().getPath()+"/DCIM/SLAMwithCameraIMU/conf/FASTdetector.txt";
+		}else if(detectorStr.equals("ORB")){
+			path = Environment.getExternalStorageDirectory().getPath()+"/DCIM/SLAMwithCameraIMU/conf/ORBdetector.txt";
+		}else if(detectorStr.equals("BRISK")){
+			path = Environment.getExternalStorageDirectory().getPath()+"/DCIM/SLAMwithCameraIMU/conf/BRISKdetector.txt";
+		}else{
+			throw new IllegalArgumentException("Error: Please set the type of feature detector!");
+		}
+		detector.read(path);
+
+		// write conf of detector
 //		path = Environment.getExternalStorageDirectory()
 //				.getPath()
 //				+ "/DCIM/SLAMwithCameraIMU/file/detector.txt";
 //		detector.write(path);
 
-		//read conf of detector
-		path = Environment.getExternalStorageDirectory()
-				.getPath()
-				+ "/DCIM/SLAMwithCameraIMU/conf/detector.txt";
-		detector.read(path);
-
-//		//read conf of extractor
+//		// read conf of extractor
 //		path = Environment.getExternalStorageDirectory()
 //				.getPath()
 //				+ "/DCIM/SLAMwithCameraIMU/conf/extractor.txt";
@@ -339,7 +360,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 			// 画像を保存
 //			path = Environment.getExternalStorageDirectory()
 //					.getPath()
-//					+ "/DCIM/SLAMwithCameraIMU/"
+//					+ "/DCIM/SLAMwithCameraIMU/img/"
 //					+ dateFormat.format(new Date()) + "_KP.jpg";
 //			Highgui.imwrite(path, image02);
 
@@ -357,7 +378,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 					DMatch forward = match12[i];
 					DMatch backward = match21[forward.trainIdx];
 					if (backward.trainIdx == forward.queryIdx &&
-							forward.distance < thresholdOfDistance){
+							forward.distance < threshold){
 						listMatch.add(forward);
 					}
 				}
@@ -368,49 +389,48 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 				// 画像を保存
 				path = Environment.getExternalStorageDirectory().getPath()
-						+ "/DCIM/SLAMwithCameraIMU/"
+						+ "/DCIM/SLAMwithCameraIMU/img/"
 						+ dateFormat.format(new Date()) + "_Match.jpg";
 				Highgui.imwrite(path, matchedImage);
 
+				// MQTT Publish
+
 				//Matをバイナリに変換
-				byte buff[] = new byte[(int) (descripters02.total() * descripters02.channels())];
-				descripters02.get(0, 0, buff);
-//				float buff2[] = new float[(int) (keyPoint02.total() * keyPoint02.channels())];
-//				keyPoint02.get(0, 0, buff2);
-				//MQTT Publish
-				MCS.publishBinary("SLAM/input/camera", buff);
-//				MCS.publishBinary("SLAM/input/camera", buff2);
+//				byte buff[] = new byte[(int) (descripters02.total() * descripters02.channels())];
+//				descripters02.get(0, 0, buff);
+//				//MQTT Publish
+//				MCS.publishBinary("SLAM/input/camera", buff);
 
 //				Log.d(TAG,""+descripters02.total());
 
-				Log.d(TAG,"key01 "+keyPoint01);
-				for (int i = 0; i < keyPoint01.rows(); i++) {
-					for (int j = 0; j < keyPoint01.cols(); j++) {
-						double[] num = keyPoint01.get(i, j);
-						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
-					}
-				}
-				Log.d(TAG,"des01 "+descripters01);
-				Log.d(TAG,"match "+matches);
-				for (int i = 0; i < matches.rows(); i++) {
-					for (int j = 0; j < matches.cols(); j++) {
-						double[] num = matches.get(i, j);
-						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+"," + num[1]+"," + num[2]+"," + num[3]);
-
-					}
-				}
-				List<DMatch> matchesList = matches.toList();
-				for (int i = 0; i < matches.rows(); i++) {
-					Log.d(TAG,""+matchesList.get(i).distance);
-				}
-				Log.d(TAG,"key02 "+keyPoint02);
-				for (int i = 0; i < keyPoint02.rows(); i++) {
-					for (int j = 0; j < keyPoint02.cols(); j++) {
-						double[] num = keyPoint02.get(i, j);
-						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
-					}
-				}
-				Log.d(TAG,"des02 "+descripters02);
+//				Log.d(TAG,"key01 "+keyPoint01);
+//				for (int i = 0; i < keyPoint01.rows(); i++) {
+//					for (int j = 0; j < keyPoint01.cols(); j++) {
+//						double[] num = keyPoint01.get(i, j);
+//						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
+//					}
+//				}
+//				Log.d(TAG,"des01 "+descripters01);
+//				Log.d(TAG,"match "+matches);
+//				for (int i = 0; i < matches.rows(); i++) {
+//					for (int j = 0; j < matches.cols(); j++) {
+//						double[] num = matches.get(i, j);
+//						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+"," + num[1]+"," + num[2]+"," + num[3]);
+//
+//					}
+//				}
+//				List<DMatch> matchesList = matches.toList();
+//				for (int i = 0; i < matches.rows(); i++) {
+//					Log.d(TAG,""+matchesList.get(i).distance);
+//				}
+//				Log.d(TAG,"key02 "+keyPoint02);
+//				for (int i = 0; i < keyPoint02.rows(); i++) {
+//					for (int j = 0; j < keyPoint02.cols(); j++) {
+//						double[] num = keyPoint02.get(i, j);
+//						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
+//					}
+//				}
+//				Log.d(TAG,"des02 "+descripters02);
 
 			}
 

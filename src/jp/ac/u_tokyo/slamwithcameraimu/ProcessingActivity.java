@@ -105,7 +105,10 @@ public class ProcessingActivity extends Activity {
 
 		// Create a RelativeLayout container that will hold a SurfaceView,
 		// and set it as the content of our activity.
+		String detector = sp.getString("detector", "");
 		mPreview = new Preview(this,MCS);
+		mPreview.setDetector(detector);
+		mPreview.setThreshold(Integer.parseInt(sp.getString("threshold", "0")));
 		setContentView(mPreview);
 
 		// Find the total number of cameras available
