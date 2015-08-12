@@ -108,7 +108,7 @@ public class ProcessingActivity extends Activity {
 		String detector = sp.getString("detector", "");
 		mPreview = new Preview(this,MCS);
 		mPreview.setDetector(detector);
-		mPreview.setThreshold(Integer.parseInt(sp.getString("threshold", "0")));
+		mPreview.setThreshold(Float.parseFloat(sp.getString("threshold", "0.0")));
 		setContentView(mPreview);
 
 		// Find the total number of cameras available
@@ -149,21 +149,12 @@ public class ProcessingActivity extends Activity {
 		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_6, this,
 				mLoaderCallback);
 
-		try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
+		try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 
 		// Open the default i.e. the first rear facing camera.
 		mCamera = Camera.open();
 		cameraCurrentlyLocked = defaultCameraId;
 		mPreview.setCamera(mCamera);
-
-//		if(MCS.client.isConnected()){
-//			log("Connected.");
-//		}else{
-//			log("Connection failed.");
-//			Log.d("SLAM", "Mqtt is not connected. Please try again.");
-//			Toast.makeText(this, getString(R.string.mqtt_not_connected),
-//					Toast.LENGTH_SHORT).show();
-//		}
 	}
 
 	@Override

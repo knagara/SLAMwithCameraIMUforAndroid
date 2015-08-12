@@ -3,7 +3,6 @@ package jp.ac.u_tokyo.slamwithcameraimu;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.opencv.core.Core;
@@ -15,8 +14,6 @@ import org.opencv.features2d.DMatch;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
-import org.opencv.features2d.Features2d;
-import org.opencv.highgui.Highgui;
 
 import android.content.Context;
 import android.hardware.Camera;
@@ -91,8 +88,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 		detectorStr = detector_;
 	}
 
-	public void setThreshold(int threshold_){
-		threshold = (float)threshold_;
+	public void setThreshold(float threshold_){
+		threshold = threshold_;
 	}
 
 	public SurfaceHolder getHolder(){
@@ -352,8 +349,16 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //			long end = System.nanoTime();
 //			Log.d(TAG,"Feature detect Time (ms):" + (end - start) / 1000000f);
 
+	    	long start = System.nanoTime();
+
+	    	long start3 = System.nanoTime();
 			detector.detect(image02, keyPoint02);
+			long end3 = System.nanoTime();
+			Log.d(TAG,"Feature detect Time (ms):" + (end3 - start3) / 1000000f);
+	    	long start5 = System.nanoTime();
 			extractor.compute(image02, keyPoint02, descripters02);
+			long end5 = System.nanoTime();
+			Log.d(TAG,"Feature extract Time (ms):" + (end5 - start5) / 1000000f);
 
 //			Features2d.drawKeypoints(image02, keyPoint02, image02KP);
 
@@ -365,9 +370,13 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //			Highgui.imwrite(path, image02);
 
 			if (frame > 0) {
+		    	long start6 = System.nanoTime();
 				matcher.match(descripters01, descripters02, matches);
 				matcher.match(descripters02, descripters01, matches_reverse);
+				long end6 = System.nanoTime();
+				Log.d(TAG,"Matching Time (ms):" + (end6 - start6) / 1000000f);
 
+		    	long start4 = System.nanoTime();
 				// マッチングのフィルタリング
 				// (1) クロスチェック
 				// (2) しきい値以上のdistanceを持つマッチングを除去
@@ -382,18 +391,59 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 						listMatch.add(forward);
 					}
 				}
-				matches.fromList(listMatch);
+				if(listMatch.size() > 0){
+					matches.fromList(listMatch);
+				}else{
+					matches = new MatOfDMatch();
+				}
+				long end4 = System.nanoTime();
+				Log.d(TAG,"Matching check Time (ms):" + (end4 - start4) / 1000000f);
 
-				Features2d.drawMatches(image01, keyPoint01, image02,
-						keyPoint02, matches, matchedImage);
+//		    	long start7 = System.nanoTime();
+//				Features2d.drawMatches(image01, keyPoint01, image02,
+//						keyPoint02, matches, matchedImage);
+//
+//				// 画像を保存
+//				path = Environment.getExternalStorageDirectory().getPath()
+//						+ "/DCIM/SLAMwithCameraIMU/img/"
+//						+ dateFormat.format(new Date()) + "_Match.jpg";
+//				Highgui.imwrite(path, matchedImage);
+//				long end7 = System.nanoTime();
+//				Log.d(TAG,"Image save Time (ms):" + (end7 - start7) / 1000000f);
 
-				// 画像を保存
-				path = Environment.getExternalStorageDirectory().getPath()
-						+ "/DCIM/SLAMwithCameraIMU/img/"
-						+ dateFormat.format(new Date()) + "_Match.jpg";
-				Highgui.imwrite(path, matchedImage);
-
+		    	long start2 = System.nanoTime();
 				// MQTT Publish
+				// マッチング結果，キーポイントの画像座標，キーポイントのdescripter
+				StringBuilder sb = new StringBuilder();
+				if(listMatch.size() > 0){
+					for(DMatch match : listMatch){
+						sb.append(match.queryIdx);
+						sb.append(":");
+						sb.append(match.trainIdx);
+						sb.append(":");
+						double[] keypoint = keyPoint02.get(match.trainIdx, 0);
+						sb.append(keypoint[0]);
+						sb.append(":");
+						sb.append(keypoint[1]);
+						sb.append(":");
+						for(int j=0;j<descripters02.cols();j++){
+//							double[] descripter = descripters02.get(match.trainIdx, j);
+							sb.append((int)descripters02.get(match.trainIdx, j)[0]);
+							sb.append(",");
+						}
+						sb.append("&");
+					}
+				}else{
+					sb.append("nomatch");
+				}
+				long end2 = System.nanoTime();
+				Log.d(TAG,"Create payload Time (ms):" + (end2 - start2) / 1000000f);
+
+		    	long start8 = System.nanoTime();
+				MCS.publish("SLAM/input/camera", new String(sb));
+				long end8 = System.nanoTime();
+				Log.d(TAG,"Message publish Time (ms):" + (end8 - start8) / 1000000f);
+
 
 				//Matをバイナリに変換
 //				byte buff[] = new byte[(int) (descripters02.total() * descripters02.channels())];
@@ -407,32 +457,41 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //				for (int i = 0; i < keyPoint01.rows(); i++) {
 //					for (int j = 0; j < keyPoint01.cols(); j++) {
 //						double[] num = keyPoint01.get(i, j);
-//						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
+////						Log.d(TAG, ""+i + "," + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
+//						Log.d(TAG, ""+i + ", " + num[0]+","+num[1]);
 //					}
 //				}
-//				Log.d(TAG,"des01 "+descripters01);
-//				Log.d(TAG,"match "+matches);
+////				Log.d(TAG,"des01 "+descripters01);
+////				Log.d(TAG,"match "+matches);
 //				for (int i = 0; i < matches.rows(); i++) {
 //					for (int j = 0; j < matches.cols(); j++) {
 //						double[] num = matches.get(i, j);
-//						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+"," + num[1]+"," + num[2]+"," + num[3]);
+//						Log.d(TAG, num[0]+"," + num[1]+"," + num[2]+"," + num[3]);
 //
 //					}
 //				}
-//				List<DMatch> matchesList = matches.toList();
-//				for (int i = 0; i < matches.rows(); i++) {
-//					Log.d(TAG,""+matchesList.get(i).distance);
-//				}
-//				Log.d(TAG,"key02 "+keyPoint02);
+////				Log.d(TAG,"key02 "+keyPoint02);
 //				for (int i = 0; i < keyPoint02.rows(); i++) {
 //					for (int j = 0; j < keyPoint02.cols(); j++) {
 //						double[] num = keyPoint02.get(i, j);
-//						Log.d(TAG, "(" + i + "," + j + ") " + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
+////						Log.d(TAG, ""+i + "," + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
+//						Log.d(TAG, ""+i + ", " + num[0]+","+num[1]);
 //					}
 //				}
-//				Log.d(TAG,"des02 "+descripters02);
+////				Log.d(TAG,"des02 "+descripters02);
+//				for (int i = 0; i < descripters02.rows(); i++) {
+//					StringBuilder sb2 = new StringBuilder();
+//					for (int j = 0; j < descripters02.cols(); j++) {
+//						sb2.append((int)descripters02.get(i, j)[0]);
+//						sb2.append(",");
+//					}
+//					Log.d(TAG, ""+i + ", " + new String(sb2));
+//				}
 
 			}
+
+			long end = System.nanoTime();
+			Log.d(TAG,"All process Time (ms):" + (end - start) / 1000000f);
 
 			return image02;
 	    }

@@ -161,7 +161,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	public void run(){
 
 		Log.d("SLAM","PublishSensorData run() start");
-		try { Thread.sleep(2500); } catch (InterruptedException e) { e.printStackTrace(); }
+		try { Thread.sleep(4000); } catch (InterruptedException e) { e.printStackTrace(); }
 
 		while(!halt_){
 			try {
@@ -222,6 +222,9 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 		gyroFixed[0] = gyro[0] + 0.017453283f;
 		gyroFixed[1] = gyro[1];
 		gyroFixed[2] = gyro[2] - 0.017453283f;
+//		gyroFixed[0] = gyro[0];
+//		gyroFixed[1] = gyro[1];
+//		gyroFixed[2] = gyro[2];
 	}
 
 	/**
@@ -280,7 +283,6 @@ public class PublishSensorData extends Thread implements SensorEventListener {
             break;
         case Sensor.TYPE_GYROSCOPE:
 //        	gyro = event.values.clone();
-//        	Utils.lowPassFilter(gyro,event.values,alpha_LPF);
         	valueX.add(event.values[0]);
         	valueY.add(event.values[1]);
         	valueZ.add(event.values[2]);
