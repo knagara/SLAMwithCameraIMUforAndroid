@@ -349,20 +349,12 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //			long end = System.nanoTime();
 //			Log.d(TAG,"Feature detect Time (ms):" + (end - start) / 1000000f);
 
-	    	long start = System.nanoTime();
-
-	    	long start3 = System.nanoTime();
 			detector.detect(image02, keyPoint02);
-			long end3 = System.nanoTime();
-			Log.d(TAG,"Feature detect Time (ms):" + (end3 - start3) / 1000000f);
-	    	long start5 = System.nanoTime();
 			extractor.compute(image02, keyPoint02, descripters02);
-			long end5 = System.nanoTime();
-			Log.d(TAG,"Feature extract Time (ms):" + (end5 - start5) / 1000000f);
 
-//			Features2d.drawKeypoints(image02, keyPoint02, image02KP);
-
-			// 画像を保存
+//			Features2d.drawKeypoints(image02, keyPoint02, image02);
+//
+//			// 画像を保存
 //			path = Environment.getExternalStorageDirectory()
 //					.getPath()
 //					+ "/DCIM/SLAMwithCameraIMU/img/"
@@ -370,13 +362,9 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //			Highgui.imwrite(path, image02);
 
 			if (frame > 0) {
-		    	long start6 = System.nanoTime();
 				matcher.match(descripters01, descripters02, matches);
 				matcher.match(descripters02, descripters01, matches_reverse);
-				long end6 = System.nanoTime();
-				Log.d(TAG,"Matching Time (ms):" + (end6 - start6) / 1000000f);
 
-		    	long start4 = System.nanoTime();
 				// マッチングのフィルタリング
 				// (1) クロスチェック
 				// (2) しきい値以上のdistanceを持つマッチングを除去
@@ -396,13 +384,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				}else{
 					matches = new MatOfDMatch();
 				}
-				long end4 = System.nanoTime();
-				Log.d(TAG,"Matching check Time (ms):" + (end4 - start4) / 1000000f);
 
-//		    	long start7 = System.nanoTime();
-//				Features2d.drawMatches(image01, keyPoint01, image02,
-//						keyPoint02, matches, matchedImage);
-//
 //				// 画像を保存
 //				path = Environment.getExternalStorageDirectory().getPath()
 //						+ "/DCIM/SLAMwithCameraIMU/img/"
@@ -411,7 +393,6 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //				long end7 = System.nanoTime();
 //				Log.d(TAG,"Image save Time (ms):" + (end7 - start7) / 1000000f);
 
-		    	long start2 = System.nanoTime();
 				// MQTT Publish
 				// マッチング結果，キーポイントの画像座標，キーポイントのdescripter
 				StringBuilder sb = new StringBuilder();
@@ -436,13 +417,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				}else{
 					sb.append("nomatch");
 				}
-				long end2 = System.nanoTime();
-				Log.d(TAG,"Create payload Time (ms):" + (end2 - start2) / 1000000f);
 
-		    	long start8 = System.nanoTime();
 				MCS.publish("SLAM/input/camera", new String(sb));
-				long end8 = System.nanoTime();
-				Log.d(TAG,"Message publish Time (ms):" + (end8 - start8) / 1000000f);
 
 
 				//Matをバイナリに変換
@@ -451,47 +427,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //				//MQTT Publish
 //				MCS.publishBinary("SLAM/input/camera", buff);
 
-//				Log.d(TAG,""+descripters02.total());
-
-//				Log.d(TAG,"key01 "+keyPoint01);
-//				for (int i = 0; i < keyPoint01.rows(); i++) {
-//					for (int j = 0; j < keyPoint01.cols(); j++) {
-//						double[] num = keyPoint01.get(i, j);
-////						Log.d(TAG, ""+i + "," + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
-//						Log.d(TAG, ""+i + ", " + num[0]+","+num[1]);
-//					}
-//				}
-////				Log.d(TAG,"des01 "+descripters01);
-////				Log.d(TAG,"match "+matches);
-//				for (int i = 0; i < matches.rows(); i++) {
-//					for (int j = 0; j < matches.cols(); j++) {
-//						double[] num = matches.get(i, j);
-//						Log.d(TAG, num[0]+"," + num[1]+"," + num[2]+"," + num[3]);
-//
-//					}
-//				}
-////				Log.d(TAG,"key02 "+keyPoint02);
-//				for (int i = 0; i < keyPoint02.rows(); i++) {
-//					for (int j = 0; j < keyPoint02.cols(); j++) {
-//						double[] num = keyPoint02.get(i, j);
-////						Log.d(TAG, ""+i + "," + num[0]+","+num[1]+","+num[2]+","+num[3]+","+num[4]+","+num[5]+","+num[6]);
-//						Log.d(TAG, ""+i + ", " + num[0]+","+num[1]);
-//					}
-//				}
-////				Log.d(TAG,"des02 "+descripters02);
-//				for (int i = 0; i < descripters02.rows(); i++) {
-//					StringBuilder sb2 = new StringBuilder();
-//					for (int j = 0; j < descripters02.cols(); j++) {
-//						sb2.append((int)descripters02.get(i, j)[0]);
-//						sb2.append(",");
-//					}
-//					Log.d(TAG, ""+i + ", " + new String(sb2));
-//				}
-
 			}
-
-			long end = System.nanoTime();
-			Log.d(TAG,"All process Time (ms):" + (end - start) / 1000000f);
 
 			return image02;
 	    }
