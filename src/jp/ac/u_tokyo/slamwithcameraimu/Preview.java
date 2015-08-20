@@ -3,6 +3,7 @@ package jp.ac.u_tokyo.slamwithcameraimu;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.opencv.core.Core;
@@ -380,6 +381,9 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 					}
 				}
 				if(listMatch.size() > 0){
+					//distanceで昇順にソート
+					Collections.sort(listMatch, new DMatchComparator());
+					//ArrayListからMatOfDMatchを生成
 					matches.fromList(listMatch);
 				}else{
 					matches = new MatOfDMatch();
