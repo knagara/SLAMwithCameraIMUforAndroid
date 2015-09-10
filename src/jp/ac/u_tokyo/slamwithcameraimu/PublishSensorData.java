@@ -170,39 +170,48 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 				e.printStackTrace();
 			}
 			//Get time in millisecond
-			if(!isFirst){
-				currentTimeMillis1 = currentTimeMillis;
-			}
+//			if(!isFirst){
+//				currentTimeMillis1 = currentTimeMillis;
+//			}
 			currentTimeMillis = System.currentTimeMillis();
 			//Gyro offset
 			subtractGyroOffset();
-			if(!isFirst){
-				//Gyro diff
-				calcGyroDiff((float)(currentTimeMillis-currentTimeMillis1)/1000.0f);
-			}
-			String data = null;
-			data = String.valueOf(currentTimeMillis) + "&" +
-					String.valueOf(acceleration[0]) + "&" +
-					String.valueOf(acceleration[1]) + "&" +
-					String.valueOf(acceleration[2]) + "&" +
-					String.valueOf(gravity[0]) + "&" +
-					String.valueOf(gravity[1]) + "&" +
-					String.valueOf(gravity[2]) + "&" +
-					String.valueOf(magnet[0]) + "&" +
-					String.valueOf(magnet[1]) + "&" +
-					String.valueOf(magnet[2]) + "&" +
-					String.valueOf(gyroFixed[0]) + "&" +
-					String.valueOf(gyroFixed[1]) + "&" +
-					String.valueOf(gyroFixed[2]) + "&" +
-					String.valueOf(gyro_diff[0]) + "&" +
-					String.valueOf(gyro_diff[1]) + "&" +
-					String.valueOf(gyro_diff[2]);
-			MCS.publish("SLAM/input/all", data);
+//			if(!isFirst){
+//				//Gyro diff
+//				calcGyroDiff((float)(currentTimeMillis-currentTimeMillis1)/1000.0f);
+//			}
+			StringBuilder sb = new StringBuilder();
+			sb.append(currentTimeMillis);
+			sb.append("&");
+			sb.append(acceleration[0]);
+			sb.append("&");
+			sb.append(acceleration[1]);
+			sb.append("&");
+			sb.append(acceleration[2]);
+			sb.append("&");
+			sb.append(gravity[0]);
+			sb.append("&");
+			sb.append(gravity[1]);
+			sb.append("&");
+			sb.append(gravity[2]);
+			sb.append("&");
+			sb.append(magnet[0]);
+			sb.append("&");
+			sb.append(magnet[1]);
+			sb.append("&");
+			sb.append(magnet[2]);
+			sb.append("&");
+			sb.append(gyroFixed[0]);
+			sb.append("&");
+			sb.append(gyroFixed[1]);
+			sb.append("&");
+			sb.append(gyroFixed[2]);
+			MCS.publish("SLAM/input/all", new String(sb));
 
-			setPreviousGyro();
-			if(isFirst){
-				isFirst = false;
-			}
+//			setPreviousGyro();
+//			if(isFirst){
+//				isFirst = false;
+//			}
 		}
 	}
 
