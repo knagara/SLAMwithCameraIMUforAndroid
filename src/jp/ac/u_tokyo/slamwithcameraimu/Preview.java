@@ -106,8 +106,6 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 		descripters01 = descripters02;
 		keyPoint02 = new MatOfKeyPoint();
 		keyPoint01 = new MatOfKeyPoint();
-		matches = new MatOfDMatch();
-		matches_reverse = new MatOfDMatch();
 		matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
 		matchedImage = new Mat(image02.rows(),image02.cols() * 2, image02.type());
 
@@ -363,8 +361,13 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //			Highgui.imwrite(path, image02);
 
 			if (frame > 0) {
-				matcher.match(descripters01, descripters02, matches);
-				matcher.match(descripters02, descripters01, matches_reverse);
+				matches = new MatOfDMatch();
+				matches_reverse = new MatOfDMatch();
+				if(descripters01.empty() == false &&
+					descripters02.empty() == false){
+					matcher.match(descripters01, descripters02, matches);
+					matcher.match(descripters02, descripters01, matches_reverse);
+				}
 
 				// マッチングのフィルタリング
 				// (1) クロスチェック

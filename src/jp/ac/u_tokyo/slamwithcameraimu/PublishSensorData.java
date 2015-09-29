@@ -285,9 +285,15 @@ public class PublishSensorData extends Thread implements SensorEventListener {
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
         	if(accelType == 2){
+        		//生データ
 //            	acceleration = event.values.clone();
-            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
-            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha_LPF);
+        		//ローパス
+            	Utils.lowPassFilter(acceleration,event.values,alpha_LPF);
+        		//ハイパス
+//            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration, alpha);
+            	//ハイパス＋ローパス
+//            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
+//            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha_LPF);
         	}
             break;
         case Sensor.TYPE_GYROSCOPE:
