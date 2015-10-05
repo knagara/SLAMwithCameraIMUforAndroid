@@ -89,4 +89,23 @@ public class Utils {
 		float magnet_y_fixed = (float) (Math.cos(orientation[0])*magnet[1] - Math.sin(orientation[0])*magnet[2]);
 		orientation[2] = (float) Math.atan2(-magnet_y_fixed,magnet_x_fixed);
 	}
+
+	/*
+	 * Remove bias of acceleration
+	 * 加速度の系統誤差を取り除く
+	 */
+	static void removeAccelBias(float[] acceleration, float[] newValue, float[] gravity, float[] orientation){
+		/// Y軸
+		if(gravity[1] > 0){ //Y軸が上を向いているとき
+			acceleration[1] = (float) (newValue[1] - 0.4f * Math.sin(3.0f*(-orientation[0])));
+		}else{ //Y軸が下を向いているとき
+			acceleration[1] = (float) (newValue[1] + 1.2f * Math.sin(orientation[0]));
+		}
+		/// Z軸
+		if(gravity[2] > 0){ //Z軸が上を向いているとき
+			acceleration[2] = (float) (newValue[2] - 0.4f * Math.sin(3.0f*(orientation[0] - Math.PI/2.0f)) * Math.sin(3.0f*(orientation[1] - Math.PI/2.0f)));
+		}else{ //Z軸が下を向いているとき
+			acceleration[2] = (float) (newValue[2] + 1.2f * Math.sin(orientation[0] + Math.PI/2.0f) * Math.sin(orientation[1] + Math.PI/2.0f));
+		}
+	}
 }

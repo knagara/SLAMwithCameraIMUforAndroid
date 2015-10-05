@@ -36,6 +36,12 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	float[] acceleration_with_gravity = new float[3];
 	float[] acceleration = new float[3];
 	float[] acceleration_temp = new float[3];
+	float[] acceleration_temp2 = new float[3];
+	float[] a1 = {0.0f, 0.0f, 0.0f}; //t-1の加速度
+	float[] a2 = {0.0f, 0.0f, 0.0f}; //t-2の加速度
+	float[] a3 = {0.0f, 0.0f, 0.0f}; //t-3の加速度
+	float[] a4 = {0.0f, 0.0f, 0.0f}; //t-4の加速度
+	float[] a5 = {0.0f, 0.0f, 0.0f}; //t-5の加速度
 	float[] acceleration_gravity = new float[3]; //計算用の一時変数
 
 	//gravity (重力)
@@ -204,6 +210,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //			if(isFirst){
 //				isFirst = false;
 //			}
+
+			Log.d("SLAM","gravity "+gravity[1]);
 		}
 	}
 
@@ -289,11 +297,18 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
 //            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha_LPF);
             	/// ローパス＋ハイパス
-            	if(true){ //ハイパスフィルタをかける条件に合うかどうか
-                	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
+//            	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
+//        		Utils.highPassFilter(acceleration_temp, acceleration_gravity, acceleration, alpha);
+            	/// ローパス → ハイパス（条件付き）
+            	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
+            	if(isDeviceStop(acceleration_temp)){ //静止している場合
+            		//ロー成分計算して引く（ハイパスフィルタの適用）
             		Utils.highPassFilter(acceleration_temp, acceleration_gravity, acceleration, alpha);
-            	}else{
-            		Utils.lowPassFilter(acceleration, event.values, alpha_LPF);
+            	}else{ //動いている場合
+            		//ロー成分引くだけ
+            		acceleration[0] = acceleration_temp[0] - acceleration_gravity[0];
+            		acceleration[1] = acceleration_temp[1] - acceleration_gravity[1];
+            		acceleration[2] = acceleration_temp[2] - acceleration_gravity[2];
             	}
         	}
             break;
@@ -321,5 +336,26 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	@Override
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+	}
+
+	private boolean isDeviceStop(float[] a){
+		/// 加速度の代入
+		a5 = a4.clone();
+		a4 = a3.clone();
+		a3 = a2.clone();
+		a2 = a1.clone();
+		a1 = a.clone();
+		/// a5が0ならまだ静止しているとみなす
+		if(a5[0] == 0.0f && a5[1] == 0.0f && a5[2] == 0.0f){
+			return true;
+		}
+		/// a と a5 比較して，差が大きい場合は動いているとみなす
+		if(Math.abs(a[0]-a5[0]) > 0.1 ||
+			Math.abs(a[1]-a5[1]) > 0.1 ||
+			Math.abs(a[2]-a5[2]) > 0.1){
+			return false;
+		}else{
+			return true;
+		}
 	}
 }
