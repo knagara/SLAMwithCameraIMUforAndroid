@@ -72,4 +72,21 @@ public class Utils {
 		Collections.sort(lst);
 		values[2] = (values[2]*alpha) + lst.get(medianNum)*(1 - alpha);
 	}
+
+	/*
+	 * Calc orientation from Gravity
+	 * see also "Studies on Orientation Measurement in Sports Using Inertial and Magnetic Field Sensors"
+	 * https://www.jstage.jst.go.jp/article/sposun/22/2/22_255/_pdf
+	 */
+	static void calcOrientationFromGravity(float[] gravity, float[] magnet, float[] orientation){
+		/// 重力の値は正負を入れ替えて使用することに注意 ///
+		/// X軸
+		orientation[0] = (float) Math.atan2(-gravity[1],-gravity[2]);
+		/// Y軸 （-90～+90までしか表現できない）
+		orientation[1] = (float) Math.atan2(gravity[0],Math.hypot(-gravity[1],-gravity[2]));
+		/// Z軸
+		float magnet_x_fixed = (float) (Math.cos(orientation[1])*magnet[0] + Math.sin(orientation[0])*Math.sin(orientation[1])*magnet[1] + Math.cos(orientation[0])*Math.sin(orientation[1])*magnet[2]);
+		float magnet_y_fixed = (float) (Math.cos(orientation[0])*magnet[1] - Math.sin(orientation[0])*magnet[2]);
+		orientation[2] = (float) Math.atan2(-magnet_y_fixed,magnet_x_fixed);
+	}
 }

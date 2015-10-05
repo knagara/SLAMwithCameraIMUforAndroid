@@ -40,6 +40,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 
 	//gravity (重力)
 	float[] gravity = new float[3];
+	//Orientation (傾き) 重力から計算される
+	float[] orientation = new float[3];
 
 	//Gyroscope （ジャイロスコープ）
 	float[] gyro = new float[3];
@@ -55,9 +57,6 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	//Magnetic field （地磁気）
 	float[] magnet = new float[3];
 
-	//Orientation (傾き)
-	float[] ori = new float[3];
-	float[] orientation = new float[3];
 
 	/*
 	 * Constructor
@@ -106,13 +105,6 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			Sensor s = sensors.get(0);
 			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
 		}
-		//Register Orientaion (方位センサ)
-//		sensors = mSensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
-//		if(sensors.size() > 0) {
-//			Log.d("SLAM","Orientation detected.");
-//			Sensor s = sensors.get(0);
-//			mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_FASTEST);
-//		}
 
 		Log.d("SLAM","PublishSensorData constructor OK");
 	}
@@ -189,11 +181,11 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			sb.append("&");
 			sb.append(acceleration[2]);
 			sb.append("&");
-			sb.append(gravity[0]);
+			sb.append(orientation[0]);
 			sb.append("&");
-			sb.append(gravity[1]);
+			sb.append(orientation[1]);
 			sb.append("&");
-			sb.append(gravity[2]);
+			sb.append(orientation[2]);
 			sb.append("&");
 			sb.append(magnet[0]);
 			sb.append("&");
@@ -282,25 +274,27 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         case Sensor.TYPE_GRAVITY:
 //        	gravity = event.values.clone();
         	Utils.lowPassFilter(gravity,event.values,alpha_LPF);
+        	/// 傾きの計算
+        	Utils.calcOrientationFromGravity(gravity, magnet, orientation);
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
         	if(accelType == 2){
         		/// 生データ
 //            	acceleration = event.values.clone();
         		/// ローパス
-            	Utils.lowPassFilter(acceleration,event.values,alpha_LPF);
+//            	Utils.lowPassFilter(acceleration,event.values,alpha_LPF);
         		/// ハイパス
 //            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration, alpha);
             	/// ハイパス＋ローパス
 //            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
 //            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha_LPF);
             	/// ローパス＋ハイパス
-//            	if(true){ //ハイパスフィルタをかける条件に合うかどうか
-//                	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
-//            		Utils.highPassFilter(acceleration_temp, acceleration_gravity, acceleration, alpha);
-//            	}else{
-//            		Utils.lowPassFilter(acceleration, event.values, alpha_LPF);
-//            	}
+            	if(true){ //ハイパスフィルタをかける条件に合うかどうか
+                	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
+            		Utils.highPassFilter(acceleration_temp, acceleration_gravity, acceleration, alpha);
+            	}else{
+            		Utils.lowPassFilter(acceleration, event.values, alpha_LPF);
+            	}
         	}
             break;
         case Sensor.TYPE_GYROSCOPE:
@@ -321,9 +315,6 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //        	magnet = event.values.clone();
         	Utils.lowPassFilter(magnet,event.values,alpha_LPF);
         	break;
-//        case Sensor.TYPE_ORIENTATION:
-//        	ori = event.values.clone();
-//            break;
         }
 	}
 
