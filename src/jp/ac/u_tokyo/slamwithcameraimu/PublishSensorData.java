@@ -32,7 +32,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	float alpha_LPF;
 
 	//acceleration (加速度)
-	int accelType = 0;
+	int accelType = 0; //0:加速度，1:ハイパスフィルタで重力を取り除いた加速度，2:LINEAR_ACCELERATION
+	double accelThreshold = 0.1; //端末が静止しているかどうか判定するための，加速度の変化量のしきい値
 	float[] acceleration_with_gravity = new float[3];
 	float[] acceleration = new float[3];
 	float[] acceleration_temp = new float[3];
@@ -42,7 +43,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	float[] a3 = {0.0f, 0.0f, 0.0f}; //t-3の加速度
 	float[] a4 = {0.0f, 0.0f, 0.0f}; //t-4の加速度
 	float[] a5 = {0.0f, 0.0f, 0.0f}; //t-5の加速度
-	float[] acceleration_gravity = new float[3]; //計算用の一時変数
+	float[] acceleration_gravity = new float[3]; //加速度の低周波成分を保存する変数
 
 	//gravity (重力)
 	float[] gravity = new float[3];
@@ -57,8 +58,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
     ArrayList<Float> valueX     = new ArrayList<Float>();
     ArrayList<Float> valueY    = new ArrayList<Float>();
     ArrayList<Float> valueZ     = new ArrayList<Float>();
-    int sampleCount = 9; //サンプリング数
-    int medianNum = 4; //サンプリングした値の使用値のインデックス
+    int sampleCount = 9; //メディアンフィルタのサンプリング数
+    int medianNum = 4; //サンプリングした値の使用値のインデックス（メディアン）
 
 	//Magnetic field （地磁気）
 	float[] magnet = new float[3];
@@ -302,10 +303,10 @@ public class PublishSensorData extends Thread implements SensorEventListener {
             	/// ローパス → ハイパス（条件付き）
             	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
             	if(isDeviceStop(acceleration_temp)){ //静止している場合
-            		//ロー成分計算して引く（ハイパスフィルタの適用）
+            		//低周波成分計算して引く（ハイパスフィルタの適用）
             		Utils.highPassFilter(acceleration_temp, acceleration_gravity, acceleration, alpha);
             	}else{ //動いている場合
-            		//ロー成分引くだけ
+            		//低周波成分引くだけ
             		acceleration[0] = acceleration_temp[0] - acceleration_gravity[0];
             		acceleration[1] = acceleration_temp[1] - acceleration_gravity[1];
             		acceleration[2] = acceleration_temp[2] - acceleration_gravity[2];
@@ -350,9 +351,9 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			return true;
 		}
 		/// a と a5 比較して，差が大きい場合は動いているとみなす
-		if(Math.abs(a[0]-a5[0]) > 0.1 ||
-			Math.abs(a[1]-a5[1]) > 0.1 ||
-			Math.abs(a[2]-a5[2]) > 0.1){
+		if(Math.abs(a[0]-a5[0]) > accelThreshold ||
+			Math.abs(a[1]-a5[1]) > accelThreshold ||
+			Math.abs(a[2]-a5[2]) > accelThreshold){
 			return false;
 		}else{
 			return true;
