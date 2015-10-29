@@ -405,6 +405,26 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				StringBuilder sb = new StringBuilder();
 				if(listMatch.size() > 0){
 					for(DMatch match : listMatch){
+
+						///共面条件モデルで使用///
+						///時刻t-1のインデックス:時刻tのインデックス:時刻t-1の画像座標x:時刻t-1の画像座標y:時刻tの画像座標x:時刻tの画像座標y&
+						sb.append(match.queryIdx);
+						sb.append(":");
+						sb.append(match.trainIdx);
+						sb.append(":");
+						double[] keypoint = keyPoint01.get(match.queryIdx, 0);
+						sb.append(keypoint[0]);
+						sb.append(":");
+						sb.append(keypoint[1]);
+						sb.append(":");
+						double[] keypoint2 = keyPoint02.get(match.trainIdx, 0);
+						sb.append(keypoint2[0]);
+						sb.append(":");
+						sb.append(keypoint2[1]);
+						sb.append("&");
+						/*
+						///RBPFモデルで使用///
+						///時刻t-1のインデックス:時刻tのインデックス:画像座標x:画像座標y:特徴量ベクトル&
 						sb.append(match.queryIdx);
 						sb.append(":");
 						sb.append(match.trainIdx);
@@ -420,6 +440,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 							sb.append(",");
 						}
 						sb.append("&");
+						*/
 					}
 				}else{
 					sb.append("nomatch");
