@@ -384,7 +384,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 					}
 				}
 				if(listMatch.size() > 0){
-					//distanceで昇順にソート
+					//distanceで昇順にソート（マッチング度が高い順で上から並ぶ）
 					Collections.sort(listMatch, new DMatchComparator());
 					//ArrayListからMatOfDMatchを生成
 					matches.fromList(listMatch);
