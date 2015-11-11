@@ -402,7 +402,10 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 				// MQTT Publish
 				// マッチング結果，キーポイントの画像座標，キーポイントのdescripter
+				long currentTimeMillis = System.currentTimeMillis();
 				StringBuilder sb = new StringBuilder();
+				sb.append(currentTimeMillis);
+				sb.append("$");
 				if(listMatch.size() > 0){
 					for(DMatch match : listMatch){
 

@@ -168,17 +168,17 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			//Get time in millisecond
-//			if(!isFirst){
-//				currentTimeMillis1 = currentTimeMillis;
-//			}
-			currentTimeMillis = System.currentTimeMillis();
 			//Gyro offset
 			subtractGyroOffset();
 //			if(!isFirst){
 //				//Gyro diff
 //				calcGyroDiff((float)(currentTimeMillis-currentTimeMillis1)/1000.0f);
 //			}
+			//Get time in millisecond
+//			if(!isFirst){
+//				currentTimeMillis1 = currentTimeMillis;
+//			}
+			currentTimeMillis = System.currentTimeMillis();
 			StringBuilder sb = new StringBuilder();
 			sb.append(currentTimeMillis);
 			sb.append("&");
