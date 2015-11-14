@@ -138,6 +138,13 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	}
 
 	/*
+	 * Set accel Threshold
+	 */
+	public void setAccelThreshold(float threshold_){
+		this.accelThreshold = threshold_;
+	}
+
+	/*
 	 * Set alpha of High-pass filter
 	 */
 	public void setAlpha(float alpha){

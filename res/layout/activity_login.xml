@@ -5,6 +5,17 @@
     android:orientation="vertical"
     tools:context="${relativePackage}.${activityClass}" >
 
+    <ScrollView
+        android:id="@+id/scrollView1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
+
+
     <TableLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent" >
@@ -25,8 +36,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10" >
-
-                <requestFocus />
             </EditText>
 
         </TableRow>
@@ -136,7 +145,7 @@
                 android:id="@+id/textView7"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Accel" />
+                android:text="Accel type" />
 
             <EditText
                 android:id="@+id/editText7"
@@ -150,8 +159,27 @@
             android:id="@+id/textView8"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0:accel with G, 1:extract G, 2:linear G"
+            android:text="0:accel with G, 1:extract G, 2:linear accel"
             android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        <TableRow
+            android:id="@+id/tableRow13"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:id="@+id/textView13"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Accel threshold" />
+
+            <EditText
+                android:id="@+id/editText13"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ems="10" />
+
+        </TableRow>
 
         <TableRow
             android:id="@+id/tableRow9"
@@ -219,7 +247,7 @@
                 android:id="@+id/textView12"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Threshold" />
+                android:text="Matching threshold" />
 
             <EditText
                 android:id="@+id/editText12"
@@ -236,5 +264,8 @@
             android:text="Login" />
 
     </TableLayout>
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

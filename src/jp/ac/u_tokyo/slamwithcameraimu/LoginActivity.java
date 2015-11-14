@@ -15,7 +15,7 @@ import android.widget.Toast;
 public class LoginActivity extends Activity implements OnClickListener {
 
 	SharedPreferences sp;
-	EditText server, port, user, pass, clientId, rate, accel_g, alpha, alpha_LPF, detector, threshold;
+	EditText server, port, user, pass, clientId, rate, accel_g, alpha, alpha_LPF, detector, threshold, accelThreshold;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +41,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 		alpha_LPF = (EditText) findViewById(R.id.editText10);
 		detector = (EditText) findViewById(R.id.editText11);
 		threshold = (EditText) findViewById(R.id.editText12);
+		accelThreshold = (EditText) findViewById(R.id.editText13);
 	}
 
 	@Override
@@ -59,6 +60,7 @@ public class LoginActivity extends Activity implements OnClickListener {
         String alpha_LPFStr = sp.getString("alpha_LPF", "");
         String detectorStr = sp.getString("detector", "");
         String thresholdStr = sp.getString("threshold", "");
+        String accelThresholdStr = sp.getString("accelThreshold", "");
 
         //Set data to the form
         server.setText(serverStr);
@@ -72,6 +74,7 @@ public class LoginActivity extends Activity implements OnClickListener {
         alpha_LPF.setText(alpha_LPFStr);
         detector.setText(detectorStr);
         threshold.setText(thresholdStr);
+        accelThreshold.setText(accelThresholdStr);
 	}
 
 	@Override
@@ -104,7 +107,8 @@ public class LoginActivity extends Activity implements OnClickListener {
 				|| alpha.getText().toString().equals("")
 				|| alpha_LPF.getText().toString().equals("")
 				|| detector.getText().toString().equals("")
-				|| threshold.getText().toString().equals("")) {
+				|| threshold.getText().toString().equals("")
+				|| accelThreshold.getText().toString().equals("")) {
 
 			Toast.makeText(this, getString(R.string.please_fill),
 					Toast.LENGTH_SHORT).show();
@@ -123,6 +127,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 			edit.putString("alpha_LPF", alpha_LPF.getText().toString());
 			edit.putString("detector", detector.getText().toString());
 			edit.putString("threshold", threshold.getText().toString());
+			edit.putString("accelThreshold", accelThreshold.getText().toString());
 			edit.commit();
 			return true;
 		}
