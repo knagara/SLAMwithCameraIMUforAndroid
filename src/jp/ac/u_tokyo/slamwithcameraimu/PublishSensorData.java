@@ -168,9 +168,6 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 		Log.d("SLAM","PublishSensorData run() start");
 		try { Thread.sleep(4000); } catch (InterruptedException e) { e.printStackTrace(); }
 
-		// Toast
-		new QuickToastTask(mContext, "IMU start", 100).execute();
-
 		while(!halt_){
 			// Fix gyro offset
 			subtractGyroOffset();
@@ -284,42 +281,42 @@ public class PublishSensorData extends Thread implements SensorEventListener {
             	// --- X軸にハイパスフィルタ適用 ---
             	if(isDeviceStop(acceleration_temp[0],0)){ //静止しているかどうか判定
             		//静止している場合
-            		Log.d("SLAM","□ X");
+            		//Log.d("SLAM","□ X");
             		//低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[0], acceleration_gravity[0], alpha);
             		acceleration[0] = data[0];
             		acceleration_gravity[0] = data[1];
             	}else{
             		//動いている場合
-            		Log.d("SLAM","■ X");
+            		//Log.d("SLAM","■ X");
             		//低周波成分引くだけ
             		acceleration[0] = acceleration_temp[0] - acceleration_gravity[0];
             	}
             	// --- Y軸にハイパスフィルタ適用 ---
             	if(isDeviceStop(acceleration_temp[1],1)){ //静止しているかどうか判定
             		//静止している場合
-            		Log.d("SLAM","□ Y");
+            		//Log.d("SLAM","□ Y");
             		//低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[1], acceleration_gravity[1], alpha);
             		acceleration[1] = data[0];
             		acceleration_gravity[1] = data[1];
             	}else{
             		//動いている場合
-            		Log.d("SLAM","■ Y");
+            		//Log.d("SLAM","■ Y");
             		//低周波成分引くだけ
             		acceleration[1] = acceleration_temp[1] - acceleration_gravity[1];
             	}
             	// --- X軸にハイパスフィルタ適用 ---
             	if(isDeviceStop(acceleration_temp[2],2)){ //静止しているかどうか判定
             		//静止している場合
-            		Log.d("SLAM","□ Z");
+            		//Log.d("SLAM","□ Z");
             		//低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[2], acceleration_gravity[2], alpha);
             		acceleration[2] = data[0];
             		acceleration_gravity[2] = data[1];
             	}else{
             		//動いている場合
-            		Log.d("SLAM","■ Z");
+            		//Log.d("SLAM","■ Z");
             		//低周波成分引くだけ
             		acceleration[2] = acceleration_temp[2] - acceleration_gravity[2];
             	}
@@ -362,10 +359,12 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 		if(a4[axis] == 0.0f){
 			return true;
 		}
-		/// 3回連続でしきい値以上なら，動いているとみなす
+		/// 2回連続でしきい値以上なら，動いているとみなす
 		if(Math.abs(a1[axis]-a2[axis]) > accelThreshold &&
-			Math.abs(a2[axis]-a3[axis]) > accelThreshold &&
-			Math.abs(a3[axis]-a4[axis]) > accelThreshold){
+				Math.abs(a2[axis]-a3[axis]) > accelThreshold &&
+				Math.abs(a3[axis]-a4[axis]) > accelThreshold){
+		/// 3期前と比較した差がしきい値以上なら，動いているとみなす
+		//if(Math.abs(a1[axis]-a4[axis]) > accelThreshold){
 			return false; //静止してない＝動いている
 		}else{
 			return true; //静止している
