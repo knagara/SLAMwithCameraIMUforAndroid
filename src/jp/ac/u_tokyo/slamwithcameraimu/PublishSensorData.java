@@ -41,8 +41,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	float[] a1 = {0.0f, 0.0f, 0.0f}; //t-1の加速度
 	float[] a2 = {0.0f, 0.0f, 0.0f}; //t-2の加速度
 	float[] a3 = {0.0f, 0.0f, 0.0f}; //t-3の加速度
-	float[] a4 = {0.0f, 0.0f, 0.0f}; //t-4の加速度
-	float[] a5 = {0.0f, 0.0f, 0.0f}; //t-5の加速度
+	float[] a4 = {0.0f, 0.0f, 0.0f}; //t-3の加速度
 	float[] acceleration_gravity = new float[3]; //加速度の低周波成分を保存する変数
 
 	//gravity (重力)
@@ -169,23 +168,15 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 		Log.d("SLAM","PublishSensorData run() start");
 		try { Thread.sleep(4000); } catch (InterruptedException e) { e.printStackTrace(); }
 
+		// Toast
+		new QuickToastTask(mContext, "IMU start", 100).execute();
+
 		while(!halt_){
-			try {
-				Thread.sleep(sleepTime);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			//Gyro offset
+			// Fix gyro offset
 			subtractGyroOffset();
-//			if(!isFirst){
-//				//Gyro diff
-//				calcGyroDiff((float)(currentTimeMillis-currentTimeMillis1)/1000.0f);
-//			}
-			//Get time in millisecond
-//			if(!isFirst){
-//				currentTimeMillis1 = currentTimeMillis;
-//			}
+			// Current time
 			currentTimeMillis = System.currentTimeMillis();
+			// Publish
 			StringBuilder sb = new StringBuilder();
 			sb.append(currentTimeMillis);
 			sb.append("&");
@@ -213,23 +204,12 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			sb.append("&");
 			sb.append(gyroFixed[2]);
 			MCS.publish("SLAM/input/all", new String(sb));
-
-//			setPreviousGyro();
-//			if(isFirst){
-//				isFirst = false;
-//			}
-
-			Log.d("SLAM","gravity "+gravity[1]);
+			try {
+				Thread.sleep(sleepTime);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
-	}
-
-	/**
-	 * setPreviousGyro
-	 */
-	private void setPreviousGyro(){
-		gyroFixed1[0] = gyroFixed[0];
-		gyroFixed1[1] = gyroFixed[1];
-		gyroFixed1[2] = gyroFixed[2];
 	}
 
 	/**
@@ -242,15 +222,6 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //		gyroFixed[0] = gyro[0];
 //		gyroFixed[1] = gyro[1];
 //		gyroFixed[2] = gyro[2];
-	}
-
-	/**
-	 * calcGyroDiff
-	 */
-	private void calcGyroDiff(float t){
-		gyro_diff[0] = Utils.lowPassFilterSingle(gyro_diff[0], (gyroFixed[0]-gyroFixed1[0])/t, alpha_LPF);
-		gyro_diff[1] = Utils.lowPassFilterSingle(gyro_diff[1], (gyroFixed[1]-gyroFixed1[1])/t, alpha_LPF);
-		gyro_diff[2] = Utils.lowPassFilterSingle(gyro_diff[2], (gyroFixed[2]-gyroFixed1[2])/t, alpha_LPF);
 	}
 
 	/*
@@ -309,13 +280,47 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 //        		Utils.highPassFilter(acceleration_temp, acceleration_gravity, acceleration, alpha);
             	/// ローパス → ハイパス（条件付き）
             	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
-            	if(isDeviceStop(acceleration_temp)){ //静止している場合
+            	// --- XYZ軸で別々にハイパスフィルタ適用 ---
+            	// --- X軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[0],0)){ //静止しているかどうか判定
+            		//静止している場合
+            		Log.d("SLAM","□ X");
             		//低周波成分計算して引く（ハイパスフィルタの適用）
-            		Utils.highPassFilter(acceleration_temp, acceleration_gravity, acceleration, alpha);
-            	}else{ //動いている場合
+            		float[] data = Utils.highPassFilterSingle(acceleration_temp[0], acceleration_gravity[0], alpha);
+            		acceleration[0] = data[0];
+            		acceleration_gravity[0] = data[1];
+            	}else{
+            		//動いている場合
+            		Log.d("SLAM","■ X");
             		//低周波成分引くだけ
             		acceleration[0] = acceleration_temp[0] - acceleration_gravity[0];
+            	}
+            	// --- Y軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[1],1)){ //静止しているかどうか判定
+            		//静止している場合
+            		Log.d("SLAM","□ Y");
+            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            		float[] data = Utils.highPassFilterSingle(acceleration_temp[1], acceleration_gravity[1], alpha);
+            		acceleration[1] = data[0];
+            		acceleration_gravity[1] = data[1];
+            	}else{
+            		//動いている場合
+            		Log.d("SLAM","■ Y");
+            		//低周波成分引くだけ
             		acceleration[1] = acceleration_temp[1] - acceleration_gravity[1];
+            	}
+            	// --- X軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[2],2)){ //静止しているかどうか判定
+            		//静止している場合
+            		Log.d("SLAM","□ Z");
+            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            		float[] data = Utils.highPassFilterSingle(acceleration_temp[2], acceleration_gravity[2], alpha);
+            		acceleration[2] = data[0];
+            		acceleration_gravity[2] = data[1];
+            	}else{
+            		//動いている場合
+            		Log.d("SLAM","■ Z");
+            		//低周波成分引くだけ
             		acceleration[2] = acceleration_temp[2] - acceleration_gravity[2];
             	}
         	}
@@ -346,24 +351,24 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 
 	}
 
-	private boolean isDeviceStop(float[] a){
+	//端末が静止しているかどうか判定
+	private boolean isDeviceStop(float a, int axis){
 		/// 加速度の代入
-		a5 = a4.clone();
-		a4 = a3.clone();
-		a3 = a2.clone();
-		a2 = a1.clone();
-		a1 = a.clone();
-		/// a5が0ならまだ静止しているとみなす
-		if(a5[0] == 0.0f && a5[1] == 0.0f && a5[2] == 0.0f){
+		a4[axis] = a3[axis];
+		a3[axis] = a2[axis];
+		a2[axis] = a1[axis];
+		a1[axis] = a;
+		/// a4が0ならまだ静止しているとみなす
+		if(a4[axis] == 0.0f){
 			return true;
 		}
-		/// a と a5 比較して，差が大きい場合は動いているとみなす
-		if(Math.abs(a[0]-a5[0]) > accelThreshold ||
-			Math.abs(a[1]-a5[1]) > accelThreshold ||
-			Math.abs(a[2]-a5[2]) > accelThreshold){
-			return false;
+		/// 3回連続でしきい値以上なら，動いているとみなす
+		if(Math.abs(a1[axis]-a2[axis]) > accelThreshold &&
+			Math.abs(a2[axis]-a3[axis]) > accelThreshold &&
+			Math.abs(a3[axis]-a4[axis]) > accelThreshold){
+			return false; //静止してない＝動いている
 		}else{
-			return true;
+			return true; //静止している
 		}
 	}
 }

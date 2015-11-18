@@ -21,8 +21,21 @@ public class Utils {
 	    value[2] = newValues[2] - lowValue[2];
 	}
 
+	/**
+	 * High-pass filter (Single value)
+	 * return [value, lowValue]
+	 */
+	static float[] highPassFilterSingle(float newValues, float lowValue, float alpha) {
+	    lowValue = alpha * lowValue + (1 - alpha) * newValues;
+	    float value = newValues - lowValue;
+	    float data[] = new float[2];
+	    data[0] = value;
+	    data[1] = lowValue;
+	    return data;
+	}
+
 	/*
-	 * Low-pass filter
+	 * Low-pass filter (Single value)
 	 */
 	static float lowPassFilterSingle(float values, float newValues, float alpha){
 		return (alpha * values + (1 - alpha) * newValues);

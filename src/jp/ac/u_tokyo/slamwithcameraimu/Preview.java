@@ -163,12 +163,13 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				if(isFirst){
 					isFirst = false;
 					initOpenCV();
+					new QuickToastTask(mContext, "Camera start", 100).execute();
 				}
 
 				if(prevFrame != frame){
 					prevFrame = frame;
 
-					new QuickToastTask(mContext, "captured", 10).execute();
+					//new QuickToastTask(mContext, "captured", 10).execute();
 
 					mGray.put(0, 0, data); // プレビュー画像NV21のYデータをコピーすればグレースケール画像になる
 					Core.flip(mGray.t(), image02, 0); // ポートレイト＋フロントなので回転
