@@ -41,7 +41,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	float[] a1 = {0.0f, 0.0f, 0.0f}; //t-1の加速度
 	float[] a2 = {0.0f, 0.0f, 0.0f}; //t-2の加速度
 	float[] a3 = {0.0f, 0.0f, 0.0f}; //t-3の加速度
-	float[] a4 = {0.0f, 0.0f, 0.0f}; //t-3の加速度
+	float[] a4 = {0.0f, 0.0f, 0.0f}; //t-4の加速度
+	float[] a5 = {0.0f, 0.0f, 0.0f}; //t-5の加速度
 	float[] acceleration_gravity = new float[3]; //加速度の低周波成分を保存する変数
 
 	//gravity (重力)
@@ -351,6 +352,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	//端末が静止しているかどうか判定
 	private boolean isDeviceStop(float a, int axis){
 		/// 加速度の代入
+		a5[axis] = a4[axis];
 		a4[axis] = a3[axis];
 		a3[axis] = a2[axis];
 		a2[axis] = a1[axis];
@@ -360,11 +362,11 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 			return true;
 		}
 		/// 2回連続でしきい値以上なら，動いているとみなす
-		if(Math.abs(a1[axis]-a2[axis]) > accelThreshold &&
-				Math.abs(a2[axis]-a3[axis]) > accelThreshold &&
-				Math.abs(a3[axis]-a4[axis]) > accelThreshold){
-		/// 3期前と比較した差がしきい値以上なら，動いているとみなす
-		//if(Math.abs(a1[axis]-a4[axis]) > accelThreshold){
+		//if(Math.abs(a1[axis]-a2[axis]) > accelThreshold &&
+		//		Math.abs(a2[axis]-a3[axis]) > accelThreshold &&
+		//		Math.abs(a3[axis]-a4[axis]) > accelThreshold){
+		/// 5期前と比較した差がしきい値以上なら，動いているとみなす
+		if(Math.abs(a1[axis]-a5[axis]) > accelThreshold){
 			return false; //静止してない＝動いている
 		}else{
 			return true; //静止している
