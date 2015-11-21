@@ -159,7 +159,7 @@
             android:id="@+id/textView8"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0:accel with G, 1:extract G, 2:linear accel"
+            android:text="0:(accel-G-bias)*HPF, 1:accel*HPF, 2:linearAccel*HPF"
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <TableRow

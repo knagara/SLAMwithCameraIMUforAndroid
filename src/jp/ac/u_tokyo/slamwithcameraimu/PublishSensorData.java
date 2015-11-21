@@ -249,9 +249,75 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         switch(event.sensor.getType()){
         case Sensor.TYPE_ACCELEROMETER:
         	if(accelType == 0){
+        		/////////////////////////////
+        		/// accelType == 0
+        		///
+        		/// Data: ACCELEROMETER raw data = accel with gravity
+        		/// Process:
+        		/// 1. calc global accel by rotation matrix, and remove gravity
+        		/// 2. remove bias
+        		/// 3. high-pass filter
+        		///
+        		/// Data: 重力を含む生の加速度データ
+        		/// Process:
+        		/// 1. 回転行列かけてから重力加速度を引く
+        		/// 2. さらに系統誤差を除去する
+        		/// 3. さらにハイパスフィルタかける
+        		/////////////////////////////
 //        		acceleration = event.values.clone();
-        		Utils.lowPassFilter(acceleration,event.values,alpha_LPF);
+        		Utils.lowPassFilter(acceleration_temp2,event.values,alpha_LPF);
+        		// 回転行列かけてグローバル座標系の加速度にする
+        		// さらに重力加速度を引く
+        		acceleration_temp = Utils.calcGlobalAccelWithoutGravity(acceleration_temp2,orientation);
+        		// 系統誤差の除去
+        		Utils.calcAccelWithoutBias(acceleration_temp,orientation);
+            	// --- XYZ軸で別々にハイパスフィルタ適用 ---
+            	// --- X軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[0],0)){ //静止しているかどうか判定
+            		//静止している場合
+            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            		float[] data = Utils.highPassFilterSingle(acceleration_temp[0], acceleration_gravity[0], alpha);
+            		acceleration[0] = data[0];
+            		acceleration_gravity[0] = data[1];
+            	}else{
+            		//動いている場合
+            		//低周波成分引くだけ
+            		acceleration[0] = acceleration_temp[0] - acceleration_gravity[0];
+            	}
+            	// --- Y軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[1],1)){ //静止しているかどうか判定
+            		//静止している場合
+            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            		float[] data = Utils.highPassFilterSingle(acceleration_temp[1], acceleration_gravity[1], alpha);
+            		acceleration[1] = data[0];
+            		acceleration_gravity[1] = data[1];
+            	}else{
+            		//動いている場合
+            		//低周波成分引くだけ
+            		acceleration[1] = acceleration_temp[1] - acceleration_gravity[1];
+            	}
+            	// --- X軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[2],2)){ //静止しているかどうか判定
+            		//静止している場合
+            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            		float[] data = Utils.highPassFilterSingle(acceleration_temp[2], acceleration_gravity[2], alpha);
+            		acceleration[2] = data[0];
+            		acceleration_gravity[2] = data[1];
+            	}else{
+            		//動いている場合
+            		//低周波成分引くだけ
+            		acceleration[2] = acceleration_temp[2] - acceleration_gravity[2];
+            	}
         	}else if(accelType == 1){
+        		/////////////////////////////
+        		/// accelType == 1
+        		///
+        		/// Data: ACCELEROMETER raw data = accel with gravity
+        		/// Process: high-pass filter
+        		///
+        		/// Data: 重力を含む生の加速度データ
+        		/// Process: ハイパスフィルタで重力加速度を除去する
+        		/////////////////////////////
             	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
             	Utils.lowPassFilter(acceleration, acceleration_temp, alpha_LPF);
         	}
@@ -264,6 +330,15 @@ public class PublishSensorData extends Thread implements SensorEventListener {
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
         	if(accelType == 2){
+        		/////////////////////////////
+        		/// accelType == 2
+        		///
+        		/// Data: LINEAR_ACCELERATION = accel without gravity
+        		/// Process: high-pass filter
+        		///
+        		/// Data: 生の加速度データから重力加速度を引いたデータ
+        		/// Process: 系統誤差が残ってしまっているのでそれを除去する
+        		/////////////////////////////
         		/// 生データ
 //            	acceleration = event.values.clone();
         		/// ローパス
@@ -276,51 +351,47 @@ public class PublishSensorData extends Thread implements SensorEventListener {
             	/// ローパス＋ハイパス
 //            	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
 //        		Utils.highPassFilter(acceleration_temp, acceleration_gravity, acceleration, alpha);
+
             	/// ローパス → ハイパス（条件付き）
             	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
             	// --- XYZ軸で別々にハイパスフィルタ適用 ---
             	// --- X軸にハイパスフィルタ適用 ---
             	if(isDeviceStop(acceleration_temp[0],0)){ //静止しているかどうか判定
             		//静止している場合
-            		//Log.d("SLAM","□ X");
             		//低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[0], acceleration_gravity[0], alpha);
             		acceleration[0] = data[0];
             		acceleration_gravity[0] = data[1];
             	}else{
             		//動いている場合
-            		//Log.d("SLAM","■ X");
             		//低周波成分引くだけ
             		acceleration[0] = acceleration_temp[0] - acceleration_gravity[0];
             	}
             	// --- Y軸にハイパスフィルタ適用 ---
             	if(isDeviceStop(acceleration_temp[1],1)){ //静止しているかどうか判定
             		//静止している場合
-            		//Log.d("SLAM","□ Y");
             		//低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[1], acceleration_gravity[1], alpha);
             		acceleration[1] = data[0];
             		acceleration_gravity[1] = data[1];
             	}else{
             		//動いている場合
-            		//Log.d("SLAM","■ Y");
             		//低周波成分引くだけ
             		acceleration[1] = acceleration_temp[1] - acceleration_gravity[1];
             	}
             	// --- X軸にハイパスフィルタ適用 ---
             	if(isDeviceStop(acceleration_temp[2],2)){ //静止しているかどうか判定
             		//静止している場合
-            		//Log.d("SLAM","□ Z");
             		//低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[2], acceleration_gravity[2], alpha);
             		acceleration[2] = data[0];
             		acceleration_gravity[2] = data[1];
             	}else{
             		//動いている場合
-            		//Log.d("SLAM","■ Z");
             		//低周波成分引くだけ
             		acceleration[2] = acceleration_temp[2] - acceleration_gravity[2];
             	}
+
         	}
             break;
         case Sensor.TYPE_GYROSCOPE:
