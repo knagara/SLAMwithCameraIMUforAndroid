@@ -346,8 +346,6 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 	    	//処理時間計測
 //	    	long start = System.nanoTime();
-//			long end = System.nanoTime();
-//			Log.d(TAG,"Feature detect Time (ms):" + (end - start) / 1000000f);
 
 			detector.detect(image02, keyPoint02);
 			extractor.compute(image02, keyPoint02, descripters02);
@@ -397,9 +395,10 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //				path = Environment.getExternalStorageDirectory().getPath()
 //						+ "/DCIM/SLAMwithCameraIMU/img/"
 //						+ dateFormat.format(new Date()) + "_Match.jpg";
+//				matchedImage = new Mat(image01.rows(), image01.cols()*2, image01.type());
+//			    Features2d.drawMatches(image01, keyPoint01, image02, keyPoint02, matches, matchedImage);
 //				Highgui.imwrite(path, matchedImage);
-//				long end7 = System.nanoTime();
-//				Log.d(TAG,"Image save Time (ms):" + (end7 - start7) / 1000000f);
+
 
 				// MQTT Publish
 				// マッチング結果，キーポイントの画像座標，キーポイントのdescripter
@@ -427,7 +426,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 						sb.append(keypoint2[1]);
 						sb.append("&");
 						/*
-						///RBPFモデルで使用///
+						///RBPFモデルで使用？///
 						///時刻t-1のインデックス:時刻tのインデックス:画像座標x:画像座標y:特徴量ベクトル&
 						sb.append(match.queryIdx);
 						sb.append(":");
@@ -460,6 +459,9 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //				MCS.publishBinary("SLAM/input/camera", buff);
 
 			}
+
+//			long end = System.nanoTime();
+//			Log.d(TAG,"Feature detect Time (ms):" + (end - start) / 1000000f);
 
 			return image02;
 	    }
