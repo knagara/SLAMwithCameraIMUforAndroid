@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.opencv.core.Core;
@@ -15,6 +17,7 @@ import org.opencv.features2d.DMatch;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.KeyPoint;
 
 import android.content.Context;
 import android.hardware.Camera;
@@ -347,12 +350,54 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 	    	//処理時間計測
 //	    	long start = System.nanoTime();
 
+	    	// 特徴点抽出
 			detector.detect(image02, keyPoint02);
+
+			// 近傍にある特徴点の削除
+			// 新しいkeyPointリスト
+			LinkedList<KeyPoint> newKeyPointList = new LinkedList<KeyPoint>(keyPoint02.toList());
+			// Matから特徴点の(x,y)抜き出して配列に代入
+			int KPtotal = keyPoint02.rows();
+			int[][] KP = new int[KPtotal][3];
+			for(int i=0;i<KPtotal;i++){
+				double[] xy = keyPoint02.get(i, 0);
+				KP[i][0] = 0; // 0 = false 削除フラグfalse
+				KP[i][1] = (int) (xy[0]);
+				KP[i][2] = (int) (xy[1]);
+			}
+			// 近傍点が存在する場合，それを削除する
+			for(int i=0;i<KPtotal;i++){
+				if(KP[i][0] == 1){ // 1 = true 削除フラグtrue
+					//newKeyPointList.remove(i);
+				}else{
+					// 近傍点探索
+					for(int j=(i+1);j<KPtotal;j++){
+						if(KP[i][1]-2 <= KP[j][1] && KP[j][1] <= KP[i][1]+2 &&
+							KP[i][2]-2 <= KP[j][2] && KP[j][2] <= KP[i][2]+2){
+							KP[j][0] = 1; // 1 = true 削除フラグtrue
+						}
+					}
+				}
+			}
+			// 削除フラグtrueになっている場所を削除
+			int ii = 0;
+			Iterator<KeyPoint> itr = newKeyPointList.iterator();
+			while(itr.hasNext()){
+			    itr.next();
+			    if(KP[ii][0] == 1){
+			    	itr.remove();
+			    }
+			    ii++;
+			}
+			// newKeyPointList から keyPoint02へ
+			keyPoint02.release();
+			keyPoint02.fromList(newKeyPointList);
+
+			// 特徴量記述
 			extractor.compute(image02, keyPoint02, descripters02);
 
+			//特徴点の描画
 //			Features2d.drawKeypoints(image02, keyPoint02, image02);
-//
-//			// 画像を保存
 //			path = Environment.getExternalStorageDirectory()
 //					.getPath()
 //					+ "/DCIM/SLAMwithCameraIMU/img/"
@@ -360,6 +405,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //			Highgui.imwrite(path, image02);
 
 			if (frame > 0) {
+
+				// マッチング
 				matches = new MatOfDMatch();
 				matches_reverse = new MatOfDMatch();
 				if(descripters01.empty() == false &&
@@ -409,7 +456,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				if(listMatch.size() > 0){
 					for(DMatch match : listMatch){
 
-						///共面条件モデルで使用///
+
+						///共面条件モデルで使用，RBPFモデルでも使用///
 						///時刻t-1のインデックス:時刻tのインデックス:時刻t-1の画像座標x:時刻t-1の画像座標y:時刻tの画像座標x:時刻tの画像座標y&
 						sb.append(match.queryIdx);
 						sb.append(":");
@@ -425,25 +473,31 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 						sb.append(":");
 						sb.append(keypoint2[1]);
 						sb.append("&");
-						/*
+
+/*
 						///RBPFモデルで使用？///
 						///時刻t-1のインデックス:時刻tのインデックス:画像座標x:画像座標y:特徴量ベクトル&
 						sb.append(match.queryIdx);
 						sb.append(":");
 						sb.append(match.trainIdx);
 						sb.append(":");
-						double[] keypoint = keyPoint02.get(match.trainIdx, 0);
+						double[] keypoint = keyPoint01.get(match.queryIdx, 0);
 						sb.append(keypoint[0]);
 						sb.append(":");
 						sb.append(keypoint[1]);
 						sb.append(":");
+						double[] keypoint2 = keyPoint02.get(match.trainIdx, 0);
+						sb.append(keypoint2[0]);
+						sb.append(":");
+						sb.append(keypoint2[1]);
+						sb.append(":");
 						for(int j=0;j<descripters02.cols();j++){
 //							double[] descripter = descripters02.get(match.trainIdx, j);
 							sb.append((int)descripters02.get(match.trainIdx, j)[0]);
-							sb.append(",");
+							sb.append(":");
 						}
 						sb.append("&");
-						*/
+*/
 					}
 				}else{
 					sb.append("nomatch");
@@ -461,7 +515,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 			}
 
 //			long end = System.nanoTime();
-//			Log.d(TAG,"Feature detect Time (ms):" + (end - start) / 1000000f);
+//			Log.d(TAG,"Time (ms):" + (end - start) / 1000000f);
 
 			return image02;
 	    }
