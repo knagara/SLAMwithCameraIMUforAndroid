@@ -105,6 +105,25 @@ public class Utils {
 	}
 
 	/*
+	 * Calc Global Accel
+	 * 回転行列かけてグローバル座標系の加速度にする
+	 */
+	static float[] calcGlobalAccel(float[] localAccel,float[] o){
+		float[] globalAccel = new float[3];
+		float sx = (float)Math.sin(o[0]);
+		float cx = (float)Math.cos(o[0]);
+		float sy = (float)Math.sin(o[1]);
+		float cy = (float)Math.cos(o[1]);
+		float sz = (float)Math.sin(o[2]);
+		float cz = (float)Math.cos(o[2]);
+		// 回転行列をかける
+		globalAccel[0] = (float)((localAccel[0]*cz*cy) + (localAccel[1]*(cz*sy*sx-sz*cx)) + (localAccel[2]*(cz*sy*cx+sz*sx)));
+		globalAccel[1] = (float)((localAccel[0]*sz*cy) + (localAccel[1]*(sz*sy*sx+cz*cx)) + (localAccel[2]*(sz*sy*cx-cz*sx)));
+		globalAccel[2] = (float)((localAccel[0]*(-sy)) + (localAccel[1]*cy*sx) + (localAccel[2]*cy*cx));
+		return globalAccel;
+	}
+
+	/*
 	 * Calc Global Accel without Gravity
 	 * 回転行列かけてグローバル座標系の加速度にする
 	 * さらに重力加速度を引く

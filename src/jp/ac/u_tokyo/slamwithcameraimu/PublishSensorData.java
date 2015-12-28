@@ -313,13 +313,15 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         		/// accelType == 1
         		///
         		/// Data: ACCELEROMETER raw data = accel with gravity
-        		/// Process: high-pass filter
+        		/// Process: calc global accel by rotation matrix, and remove gravity
         		///
         		/// Data: 重力を含む生の加速度データ
-        		/// Process: ハイパスフィルタで重力加速度を除去する
+        		/// Process: 回転行列かけてから重力加速度を引く
         		/////////////////////////////
-            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
-            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha_LPF);
+        		Utils.lowPassFilter(acceleration_temp2,event.values,alpha_LPF);
+        		// 回転行列かけてグローバル座標系の加速度にする
+        		// さらに重力加速度を引く
+        		acceleration = Utils.calcGlobalAccelWithoutGravity(acceleration_temp2,orientation);
         	}
             break;
         case Sensor.TYPE_GRAVITY:
@@ -329,7 +331,12 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         	Utils.calcOrientationFromGravity(gravity, magnet, orientation);
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
-        	if(accelType == 2){
+        	if(accelType == 3){
+        		/// ローパス
+        		Utils.lowPassFilter(acceleration_temp2,event.values,alpha_LPF);
+        		// 回転行列かけてグローバル座標系の加速度にする
+        		acceleration = Utils.calcGlobalAccel(acceleration_temp2,orientation);
+        	}else if(accelType == 2){
         		/////////////////////////////
         		/// accelType == 2
         		///
