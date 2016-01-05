@@ -336,6 +336,10 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         		Utils.lowPassFilter(acceleration_temp2,event.values,alpha_LPF);
         		// 回転行列かけてグローバル座標系の加速度にする
         		acceleration = Utils.calcGlobalAccel(acceleration_temp2,orientation);
+        	}else if(accelType == 4){
+        		// 生データ使う
+        		// 回転行列かけてグローバル座標系の加速度にする
+        		acceleration = Utils.calcGlobalAccel(event.values,orientation);
         	}else if(accelType == 2){
         		/////////////////////////////
         		/// accelType == 2
