@@ -29,7 +29,7 @@
                 android:id="@+id/textView1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Server" />
+                android:text="MQTT Server" />
 
             <EditText
                 android:id="@+id/editText1"
@@ -49,7 +49,7 @@
                 android:id="@+id/textView2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Port" />
+                android:text="MQTT Port" />
 
             <EditText
                 android:id="@+id/editText2"
@@ -159,7 +159,7 @@
             android:id="@+id/textView8"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0:(accel-G-bias)*HPF, 1:accel-G, 2:linearAccel*HPF, 3:linearAccel"
+            android:text="0:(accel-G-bias)*HPF, 1:accel-G, 2:linearAccel*HPF, 3:linearAccel*LPF, 4:linearAccel"
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <TableRow
