@@ -345,6 +345,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 	    protected Mat doInBackground(Mat... mat) {
 
+			long currentTimeMillis = System.currentTimeMillis();
+
 	    	image02 = mat[0].clone();
 
 	    	//処理時間計測
@@ -449,7 +451,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 				// MQTT Publish
 				// マッチング結果，キーポイントの画像座標，キーポイントのdescripter
-				long currentTimeMillis = System.currentTimeMillis();
+				//long currentTimeMillis = System.currentTimeMillis();
 				StringBuilder sb = new StringBuilder();
 				sb.append(currentTimeMillis);
 				sb.append("$");
