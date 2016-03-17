@@ -73,7 +73,7 @@ Payload: timestamp$index_of_keypoint_on_previous_frame:index_of_keypoint_on_curr
 
 - Androidアプリ（このページ）
 - SLAMプログラム（ここを参照 -> [SLAMwithCameraIMUforPython](https://github.com/knagara/SLAMwithCameraIMUforPython)）
-- MQTTブローカー（ここを参照 -> [MQTT](http://mqtt.org/), [mosquitto](http://mosquitto.org/), [Apollo](https://activemq.apache.org/apollo/)）
+- MQTTブローカー（ここを参照 -> [MQTTについて詳しく知る](https://sango.shiguredo.jp/mqtt), [MQTTについてのまとめ](http://tdoc.info/blog/2014/01/27/mqtt.html), [MQTT Broker比較](http://acro-engineer.hatenablog.com/entry/2015/12/09/120500)）
 
 ## 使い方
 1. OpenCV Managerをインストール → [Google Play](https://play.google.com/store/apps/details?id=org.opencv.engine)
