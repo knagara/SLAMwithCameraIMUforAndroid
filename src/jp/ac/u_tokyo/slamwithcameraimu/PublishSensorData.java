@@ -32,22 +32,22 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 	float alpha_LPF;
 
 	//acceleration (加速度)
-	int accelType = 0; //0:加速度，1:ハイパスフィルタで重力を取り除いた加速度，2:LINEAR_ACCELERATION
-	double accelThreshold = 0.1; //端末が静止しているかどうか判定するための，加速度の変化量のしきい値
+	int accelType = 0; //0:(accel-G-bias)*HPF, 1:accel-G, 2:linearAccel*HPF, 3:linearAccel*LPF, 4:linearAccel
+	double accelThreshold = 0.1; //threshold to decide whether device is moving or not 端末が静止しているかどうか判定するための，加速度の変化量のしきい値
 	float[] acceleration_with_gravity = new float[3];
 	float[] acceleration = new float[3];
 	float[] acceleration_temp = new float[3];
 	float[] acceleration_temp2 = new float[3];
-	float[] a1 = {0.0f, 0.0f, 0.0f}; //t-1の加速度
-	float[] a2 = {0.0f, 0.0f, 0.0f}; //t-2の加速度
-	float[] a3 = {0.0f, 0.0f, 0.0f}; //t-3の加速度
-	float[] a4 = {0.0f, 0.0f, 0.0f}; //t-4の加速度
-	float[] a5 = {0.0f, 0.0f, 0.0f}; //t-5の加速度
-	float[] acceleration_gravity = new float[3]; //加速度の低周波成分を保存する変数
+	float[] a1 = {0.0f, 0.0f, 0.0f}; //acceleration of time t-1  t-1の加速度
+	float[] a2 = {0.0f, 0.0f, 0.0f}; //acceleration of time t-2  t-2の加速度
+	float[] a3 = {0.0f, 0.0f, 0.0f}; //acceleration of time t-3  t-3の加速度
+	float[] a4 = {0.0f, 0.0f, 0.0f}; //acceleration of time t-4  t-4の加速度
+	float[] a5 = {0.0f, 0.0f, 0.0f}; //acceleration of time t-5  t-5の加速度
+	float[] acceleration_gravity = new float[3]; //gravity in acceleration  加速度の低周波成分を保存する変数
 
 	//gravity (重力)
 	float[] gravity = new float[3];
-	//Orientation (傾き) 重力から計算される
+	//Orientation (傾き)
 	float[] orientation = new float[3];
 
 	//Gyroscope （ジャイロスコープ）
@@ -58,8 +58,8 @@ public class PublishSensorData extends Thread implements SensorEventListener {
     ArrayList<Float> valueX     = new ArrayList<Float>();
     ArrayList<Float> valueY    = new ArrayList<Float>();
     ArrayList<Float> valueZ     = new ArrayList<Float>();
-    int sampleCount = 9; //メディアンフィルタのサンプリング数
-    int medianNum = 4; //サンプリングした値の使用値のインデックス（メディアン）
+    int sampleCount = 9; //Total times of sampling in median filter  メディアンフィルタのサンプリング数
+    int medianNum = 4; //median number of sampling data  サンプリングした値の使用値のインデックス（メディアン）
 
 	//Magnetic field （地磁気）
 	float[] magnet = new float[3];
@@ -266,46 +266,46 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         		/////////////////////////////
 //        		acceleration = event.values.clone();
         		Utils.lowPassFilter(acceleration_temp2,event.values,alpha_LPF);
-        		// 回転行列かけてグローバル座標系の加速度にする
-        		// さらに重力加速度を引く
+        		// 1. calc global accel by rotation matrix, and remove gravity  回転行列かけてグローバル座標系の加速度にする さらに重力加速度を引く
         		acceleration_temp = Utils.calcGlobalAccelWithoutGravity(acceleration_temp2,orientation);
-        		// 系統誤差の除去
+        		// 2. remove bias  系統誤差の除去
         		Utils.calcAccelWithoutBias(acceleration_temp,orientation);
-            	// --- XYZ軸で別々にハイパスフィルタ適用 ---
-            	// --- X軸にハイパスフィルタ適用 ---
-            	if(isDeviceStop(acceleration_temp[0],0)){ //静止しているかどうか判定
-            		//静止している場合
-            		//低周波成分計算して引く（ハイパスフィルタの適用）
+        		// 3. high-pass filter
+            	// Apply HPF to X,Y,Z separately  XYZ軸で別々にハイパスフィルタ適用
+            	// --- Apply HPF to X axis  X軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[0],0)){ //Judge if the device is moving or not  静止しているかどうか判定
+            		// If the device stop  静止している場合
+            		// Apply HPF  低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[0], acceleration_gravity[0], alpha);
             		acceleration[0] = data[0];
             		acceleration_gravity[0] = data[1];
             	}else{
-            		//動いている場合
-            		//低周波成分引くだけ
+            		// If the device is moving  動いている場合
+            		// Only subtract low‐frequency‐component  低周波成分引くだけ
             		acceleration[0] = acceleration_temp[0] - acceleration_gravity[0];
             	}
-            	// --- Y軸にハイパスフィルタ適用 ---
-            	if(isDeviceStop(acceleration_temp[1],1)){ //静止しているかどうか判定
-            		//静止している場合
-            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            	// --- Apply HPF to Y axis  Y軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[1],1)){ //Judge if the device is moving or not  静止しているかどうか判定
+            		// If the device stop  静止している場合
+            		// Apply HPF  低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[1], acceleration_gravity[1], alpha);
             		acceleration[1] = data[0];
             		acceleration_gravity[1] = data[1];
             	}else{
-            		//動いている場合
-            		//低周波成分引くだけ
+            		// If the device is moving  動いている場合
+            		// Only subtract low‐frequency‐component  低周波成分引くだけ
             		acceleration[1] = acceleration_temp[1] - acceleration_gravity[1];
             	}
-            	// --- X軸にハイパスフィルタ適用 ---
-            	if(isDeviceStop(acceleration_temp[2],2)){ //静止しているかどうか判定
-            		//静止している場合
-            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            	// --- Apply HPF to Z axis  Z軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[2],2)){ //Judge if the device is moving or not  静止しているかどうか判定
+            		// If the device stop  静止している場合
+            		// Apply HPF  低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[2], acceleration_gravity[2], alpha);
             		acceleration[2] = data[0];
             		acceleration_gravity[2] = data[1];
             	}else{
-            		//動いている場合
-            		//低周波成分引くだけ
+            		// If the device is moving  動いている場合
+            		// Only subtract low‐frequency‐component  低周波成分引くだけ
             		acceleration[2] = acceleration_temp[2] - acceleration_gravity[2];
             	}
         	}else if(accelType == 1){
@@ -319,26 +319,25 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         		/// Process: 回転行列かけてから重力加速度を引く
         		/////////////////////////////
         		Utils.lowPassFilter(acceleration_temp2,event.values,alpha_LPF);
-        		// 回転行列かけてグローバル座標系の加速度にする
-        		// さらに重力加速度を引く
+        		// calc global accel by rotation matrix, and remove gravity  回転行列かけてグローバル座標系の加速度にする さらに重力加速度を引く
         		acceleration = Utils.calcGlobalAccelWithoutGravity(acceleration_temp2,orientation);
         	}
             break;
         case Sensor.TYPE_GRAVITY:
 //        	gravity = event.values.clone();
         	Utils.lowPassFilter(gravity,event.values,alpha_LPF);
-        	/// 傾きの計算
+        	/// Calc orientation  傾きの計算
         	Utils.calcOrientationFromGravity(gravity, magnet, orientation);
             break;
         case Sensor.TYPE_LINEAR_ACCELERATION:
         	if(accelType == 3){
-        		/// ローパス
+        		/// LPF  ローパス
         		Utils.lowPassFilter(acceleration_temp2,event.values,alpha_LPF);
-        		// 回転行列かけてグローバル座標系の加速度にする
+        		// calc global accel by rotation matrix  回転行列かけてグローバル座標系の加速度にする
         		acceleration = Utils.calcGlobalAccel(acceleration_temp2,orientation);
         	}else if(accelType == 4){
-        		// 生データ使う
-        		// 回転行列かけてグローバル座標系の加速度にする
+        		// Use row data  生データ使う
+        		// calc global accel by rotation matrix  回転行列かけてグローバル座標系の加速度にする
         		acceleration = Utils.calcGlobalAccel(event.values,orientation);
         	}else if(accelType == 2){
         		/////////////////////////////
@@ -350,56 +349,56 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         		/// Data: 生の加速度データから重力加速度を引いたデータ
         		/// Process: 系統誤差が残ってしまっているのでそれを除去する
         		/////////////////////////////
-        		/// 生データ
+        		/// Row data  生データ
 //            	acceleration = event.values.clone();
-        		/// ローパス
+        		/// LPF  ローパス
 //            	Utils.lowPassFilter(acceleration,event.values,alpha_LPF);
-        		/// ハイパス
+        		/// HPF  ハイパス
 //            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration, alpha);
-            	/// ハイパス＋ローパス
+            	/// HPF+LPF  ハイパス＋ローパス
 //            	Utils.highPassFilter(event.values, acceleration_gravity, acceleration_temp, alpha);
 //            	Utils.lowPassFilter(acceleration, acceleration_temp, alpha_LPF);
-            	/// ローパス＋ハイパス
+            	/// LPF+HPF  ローパス＋ハイパス
 //            	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
 //        		Utils.highPassFilter(acceleration_temp, acceleration_gravity, acceleration, alpha);
 
-            	/// ローパス → ハイパス（条件付き）
+            	/// LPF -> HPF  ローパス → ハイパス（条件付き）
             	Utils.lowPassFilter(acceleration_temp, event.values, alpha_LPF);
-            	// --- XYZ軸で別々にハイパスフィルタ適用 ---
-            	// --- X軸にハイパスフィルタ適用 ---
-            	if(isDeviceStop(acceleration_temp[0],0)){ //静止しているかどうか判定
-            		//静止している場合
-            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            	// Apply HPF to X,Y,Z separately  XYZ軸で別々にハイパスフィルタ適用
+            	// --- Apply HPF to X axis  X軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[0],0)){ //Judge if the device is moving or not  静止しているかどうか判定
+            		// If the device stop  静止している場合
+            		// Apply HPF  低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[0], acceleration_gravity[0], alpha);
             		acceleration[0] = data[0];
             		acceleration_gravity[0] = data[1];
             	}else{
-            		//動いている場合
-            		//低周波成分引くだけ
+            		// If the device is moving  動いている場合
+            		// Only subtract low‐frequency‐component  低周波成分引くだけ
             		acceleration[0] = acceleration_temp[0] - acceleration_gravity[0];
             	}
-            	// --- Y軸にハイパスフィルタ適用 ---
-            	if(isDeviceStop(acceleration_temp[1],1)){ //静止しているかどうか判定
-            		//静止している場合
-            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            	// --- Apply HPF to Y axis  Y軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[1],1)){ //Judge if the device is moving or not  静止しているかどうか判定
+            		// If the device stop  静止している場合
+            		// Apply HPF  低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[1], acceleration_gravity[1], alpha);
             		acceleration[1] = data[0];
             		acceleration_gravity[1] = data[1];
             	}else{
-            		//動いている場合
-            		//低周波成分引くだけ
+            		// If the device is moving  動いている場合
+            		// Only subtract low‐frequency‐component  低周波成分引くだけ
             		acceleration[1] = acceleration_temp[1] - acceleration_gravity[1];
             	}
-            	// --- X軸にハイパスフィルタ適用 ---
-            	if(isDeviceStop(acceleration_temp[2],2)){ //静止しているかどうか判定
-            		//静止している場合
-            		//低周波成分計算して引く（ハイパスフィルタの適用）
+            	// --- Apply HPF to Z axis  Z軸にハイパスフィルタ適用 ---
+            	if(isDeviceStop(acceleration_temp[2],2)){ //Judge if the device is moving or not  静止しているかどうか判定
+            		// If the device stop  静止している場合
+            		// Apply HPF  低周波成分計算して引く（ハイパスフィルタの適用）
             		float[] data = Utils.highPassFilterSingle(acceleration_temp[2], acceleration_gravity[2], alpha);
             		acceleration[2] = data[0];
             		acceleration_gravity[2] = data[1];
             	}else{
-            		//動いている場合
-            		//低周波成分引くだけ
+            		// If the device is moving  動いている場合
+            		// Only subtract low‐frequency‐component  低周波成分引くだけ
             		acceleration[2] = acceleration_temp[2] - acceleration_gravity[2];
             	}
 
@@ -410,7 +409,7 @@ public class PublishSensorData extends Thread implements SensorEventListener {
         	valueX.add(event.values[0]);
         	valueY.add(event.values[1]);
         	valueZ.add(event.values[2]);
-        	//必要なサンプリング数に達したら
+        	// When you get enough times of sampling data  必要なサンプリング数に達したら
         	if(valueX.size() == sampleCount){
         		Utils.medianFilter(gyro, valueX, valueY, valueZ, medianNum);
         		//Utils.medianLPFilter(gyro, valueX, valueY, valueZ, medianNum, alpha);
@@ -431,27 +430,27 @@ public class PublishSensorData extends Thread implements SensorEventListener {
 
 	}
 
-	//端末が静止しているかどうか判定
+	// Judge if the device is moving or not  端末が静止しているかどうか判定
 	private boolean isDeviceStop(float a, int axis){
-		/// 加速度の代入
+		/// Substitution of acceleration  加速度の代入
 		a5[axis] = a4[axis];
 		a4[axis] = a3[axis];
 		a3[axis] = a2[axis];
 		a2[axis] = a1[axis];
 		a1[axis] = a;
-		/// a4が0ならまだ静止しているとみなす
+		/// If a4 is 0, the device is stop  a4が0ならまだ静止しているとみなす
 		if(a4[axis] == 0.0f){
 			return true;
 		}
-		/// 2回連続でしきい値以上なら，動いているとみなす
+		/// If acceleration is above threshold two times continuity, the device is moving  2回連続でしきい値以上なら，動いているとみなす
 		//if(Math.abs(a1[axis]-a2[axis]) > accelThreshold &&
 		//		Math.abs(a2[axis]-a3[axis]) > accelThreshold &&
 		//		Math.abs(a3[axis]-a4[axis]) > accelThreshold){
-		/// 5期前と比較した差がしきい値以上なら，動いているとみなす
+		///  If al-a5 is above threshold, the device is moving  5期前と比較した差がしきい値以上なら，動いているとみなす
 		if(Math.abs(a1[axis]-a5[axis]) > accelThreshold){
-			return false; //静止してない＝動いている
+			return false;
 		}else{
-			return true; //静止している
+			return true;
 		}
 	}
 }

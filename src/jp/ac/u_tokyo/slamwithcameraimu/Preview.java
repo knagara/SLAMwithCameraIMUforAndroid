@@ -100,10 +100,13 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 		return mHolder;
 	}
 
+	/**
+	 * Intialize Open CV
+	 */
 	public void initOpenCV(){
-		// Mat
-		mGray = new Mat(prevSize.height, prevSize.width, CvType.CV_8U); // プレビューサイズ分のMatを用意
-		image02 = new Mat(prevSize.width, prevSize.height, CvType.CV_8U); // 今回はポートレイト＋フロントカメラを使ったので画像を回転させたりするためのバッファ
+		// Initialize Mat
+		mGray = new Mat(prevSize.height, prevSize.width, CvType.CV_8U);
+		image02 = new Mat(prevSize.width, prevSize.height, CvType.CV_8U);
 		image01 = image02;
 		descripters02 = new Mat(image02.rows(), image02.cols(),image02.type());
 		descripters01 = descripters02;
@@ -174,8 +177,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 					//new QuickToastTask(mContext, "captured", 10).execute();
 
-					mGray.put(0, 0, data); // プレビュー画像NV21のYデータをコピーすればグレースケール画像になる
-					Core.flip(mGray.t(), image02, 0); // ポートレイト＋フロントなので回転
+					mGray.put(0, 0, data); // Create gray scale image  プレビュー画像NV21のYデータをコピーすればグレースケール画像になる
+					Core.flip(mGray.t(), image02, 0); // Rotate image  ポートレイト＋フロントなので回転
 					Core.flip(image02, image02, -1);
 
 					new FeatureDetectTask().execute(image02);
@@ -349,39 +352,39 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 	    	image02 = mat[0].clone();
 
-	    	//処理時間計測
+	    	// Calc processing time  処理時間計測
 //	    	long start = System.nanoTime();
 
-	    	// 特徴点抽出
+	    	// Detect keypoints  特徴点抽出
 			detector.detect(image02, keyPoint02);
 
-			// 近傍にある特徴点の削除
-			// 新しいkeyPointリスト
+			// Delete nearest neighbor keypoints  近傍にある特徴点の削除
+			// New keypoint list  新しいkeyPointリスト
 			LinkedList<KeyPoint> newKeyPointList = new LinkedList<KeyPoint>(keyPoint02.toList());
-			// Matから特徴点の(x,y)抜き出して配列に代入
+			// Substitute (x,y) for array from Mat  Matから特徴点の(x,y)抜き出して配列に代入
 			int KPtotal = keyPoint02.rows();
 			int[][] KP = new int[KPtotal][3];
 			for(int i=0;i<KPtotal;i++){
 				double[] xy = keyPoint02.get(i, 0);
-				KP[i][0] = 0; // 0 = false 削除フラグfalse
+				KP[i][0] = 0; // 0 = false  delete flag false  削除フラグfalse
 				KP[i][1] = (int) (xy[0]);
 				KP[i][2] = (int) (xy[1]);
 			}
-			// 近傍点が存在する場合，それを削除する
+			// If near keypoint is found, delete it  近傍点が存在する場合，それを削除する
 			for(int i=0;i<KPtotal;i++){
-				if(KP[i][0] == 1){ // 1 = true 削除フラグtrue
+				if(KP[i][0] == 1){ // 1 = true  delete flag ture  削除フラグtrue
 					//newKeyPointList.remove(i);
 				}else{
-					// 近傍点探索
+					// Search near keypoints  近傍点探索
 					for(int j=(i+1);j<KPtotal;j++){
 						if(KP[i][1]-2 <= KP[j][1] && KP[j][1] <= KP[i][1]+2 &&
 							KP[i][2]-2 <= KP[j][2] && KP[j][2] <= KP[i][2]+2){
-							KP[j][0] = 1; // 1 = true 削除フラグtrue
+							KP[j][0] = 1; // 1 = true  delete flag ture  削除フラグtrue
 						}
 					}
 				}
 			}
-			// 削除フラグtrueになっている場所を削除
+			// If delete flag is true, delete it  削除フラグtrueになっている場所を削除
 			int ii = 0;
 			Iterator<KeyPoint> itr = newKeyPointList.iterator();
 			while(itr.hasNext()){
@@ -391,14 +394,14 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 			    }
 			    ii++;
 			}
-			// newKeyPointList から keyPoint02へ
+			// newKeyPointList -> keyPoint02
 			keyPoint02.release();
 			keyPoint02.fromList(newKeyPointList);
 
-			// 特徴量記述
+			// Descript keypoint's feature  特徴量記述
 			extractor.compute(image02, keyPoint02, descripters02);
 
-			//特徴点の描画
+			// Draw keypoints  特徴点の描画
 //			Features2d.drawKeypoints(image02, keyPoint02, image02);
 //			path = Environment.getExternalStorageDirectory()
 //					.getPath()
@@ -408,7 +411,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 			if (frame > 0) {
 
-				// マッチング
+				// Matching  マッチング
 				matches = new MatOfDMatch();
 				matches_reverse = new MatOfDMatch();
 				if(descripters01.empty() == false &&
@@ -417,9 +420,9 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 					matcher.match(descripters02, descripters01, matches_reverse);
 				}
 
-				// マッチングのフィルタリング
-				// (1) クロスチェック
-				// (2) しきい値以上のdistanceを持つマッチングを除去
+				// Filtering of matching  マッチングのフィルタリング
+				// (1) Cross check  クロスチェック
+				// (2) Delete matching which has too big distance above threshold  しきい値以上のdistanceを持つマッチングを除去
 				DMatch[] match12 = matches.toArray();
 				DMatch[] match21 = matches_reverse.toArray();
 				ArrayList<DMatch> listMatch = new ArrayList<DMatch>();
@@ -432,15 +435,15 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 					}
 				}
 				if(listMatch.size() > 0){
-					//distanceで昇順にソート（マッチング度が高い順で上から並ぶ）
+					// Sort by distance ascending order  distanceで昇順にソート（マッチング度が高い順で上から並ぶ）
 					Collections.sort(listMatch, new DMatchComparator());
-					//ArrayListからMatOfDMatchを生成
+					// ArrayList -> MatOfDMatch
 					matches.fromList(listMatch);
 				}else{
 					matches = new MatOfDMatch();
 				}
 
-//				// 画像を保存
+//				// Save image  画像を保存
 //				path = Environment.getExternalStorageDirectory().getPath()
 //						+ "/DCIM/SLAMwithCameraIMU/img/"
 //						+ dateFormat.format(new Date()) + "_Match.jpg";
@@ -450,7 +453,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 
 
 				// MQTT Publish
-				// マッチング結果，キーポイントの画像座標，キーポイントのdescripter
+				// Matching, image coordinate of keypoints, マッチング結果，キーポイントの画像座標
 				//long currentTimeMillis = System.currentTimeMillis();
 				StringBuilder sb = new StringBuilder();
 				sb.append(currentTimeMillis);
@@ -458,9 +461,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				if(listMatch.size() > 0){
 					for(DMatch match : listMatch){
 
-
-						///共面条件モデルで使用，RBPFモデルでも使用///
-						///時刻t-1のインデックス:時刻tのインデックス:時刻t-1の画像座標x:時刻t-1の画像座標y:時刻tの画像座標x:時刻tの画像座標y&
+						/// index_of_keypoint_on_previous_frame:index_of_keypoint_on_current_frame:image_coordinate[x]_on_previous_frame:image_coordinate[y]_on_previous_frame:image_coordinate[x]_on_current_frame:image_coordinate[y]_on_current_frame&
+						/// 時刻t-1のインデックス:時刻tのインデックス:時刻t-1の画像座標x:時刻t-1の画像座標y:時刻tの画像座標x:時刻tの画像座標y&
 						sb.append(match.queryIdx);
 						sb.append(":");
 						sb.append(match.trainIdx);
@@ -477,8 +479,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 						sb.append("&");
 
 /*
-						///RBPFモデルで使用？///
-						///時刻t-1のインデックス:時刻tのインデックス:画像座標x:画像座標y:特徴量ベクトル&
+ * 						/// Add descripter
 						sb.append(match.queryIdx);
 						sb.append(":");
 						sb.append(match.trainIdx);
@@ -508,7 +509,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 				MCS.publish("SLAM/input/camera", new String(sb));
 
 
-				//Matをバイナリに変換
+				//Mat -> binary  Matをバイナリに変換
 //				byte buff[] = new byte[(int) (descripters02.total() * descripters02.channels())];
 //				descripters02.get(0, 0, buff);
 //				//MQTT Publish

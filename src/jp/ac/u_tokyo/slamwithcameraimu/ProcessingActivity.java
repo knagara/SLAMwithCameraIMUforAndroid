@@ -126,7 +126,7 @@ public class ProcessingActivity extends Activity {
 
 		//Screen size
 		WindowManager wm = (WindowManager)getSystemService(WINDOW_SERVICE);
-		// ディスプレイのインスタンス生成
+		// Create instance of display ディスプレイのインスタンス生成
 		Display disp = wm.getDefaultDisplay();
 		sw = disp.getWidth();
 		sh = disp.getHeight();

@@ -42,8 +42,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 	    if(keyCode == KeyEvent.KEYCODE_BACK) {
-	        //Back Key
-	    	//何もしない
+	        //Back Key 何もしない
 	    	return true;
 	    } else {
 	        return super.onKeyDown(keyCode, event);
