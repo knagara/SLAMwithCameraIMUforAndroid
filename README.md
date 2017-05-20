@@ -19,11 +19,11 @@
 3. Install and launch the app
 4. Press the login button
 5. Fill in the form
-<br />
+
 [Recommended setting]
-<br />
+
 ![](https://github.com/knagara/miscellaneous/blob/master/Login_.png)
-<br />
+
 6. Press the start button
 7. Now your smartphone is publishing sensor data to your MQTT server!
 ~~~
@@ -63,7 +63,7 @@ Payload: timestamp$index_of_keypoint_on_previous_frame:index_of_keypoint_on_curr
 |QuickToastTask.java|not important|
 |Utils.java|Calculation functions|
 
-<br /><br />
+
 
 ## 概要
 
@@ -81,11 +81,11 @@ Payload: timestamp$index_of_keypoint_on_previous_frame:index_of_keypoint_on_curr
 3. アプリをインストールして起動
 4. Loginボタンを押下
 5. フォームに記入
-<br />
+
 [推奨設定]
-<br />
+
 ![](https://github.com/knagara/miscellaneous/blob/master/Login_.png)
-<br />
+
 6. Startボタンを押下
 7. MQTTブローカーに対して、センサデータの送信が始まります。
 ~~~
